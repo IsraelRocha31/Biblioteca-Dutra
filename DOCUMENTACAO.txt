@@ -1,0 +1,232 @@
+================================================================================
+  SISTEMA DE BIBLIOTECA - EE TEMPO INTEGRAL ALFREDO DUTRA
+  Documentação do Projeto
+================================================================================
+
+1. SOBRE O PROJETO
+--------------------------------------------------------------------------------
+Sistema de gerenciamento de acervo bibliográfico para a Escola Estadual de 
+Tempo Integral Alfredo Dutra, localizada na Avenida Esperanto, Centro, 
+Itapetinga - BA. O sistema permite o cadastro de livros com informações 
+como ISBN, nome, foto da capa, descrição e autor. Possui acesso livre para 
+consulta e acesso restrito (super administrador) para gerenciamento.
+
+Escola: EE Colegio Estadual Alfredo Dutra - Tempo Integral
+Endereco: Avenida Esperanto, Centro, 45700-000 Itapetinga - BA
+Telefone: (77) 3261-1219
+Codigo INEP: 29282608
+
+
+2. TECNOLOGIAS UTILIZADAS
+--------------------------------------------------------------------------------
+Backend:
+  - Node.js
+  - Express.js (framework web)
+  - SQLite3 (bananco de dados relacional leve)
+  - JWT (autenticacao via JSON Web Token)
+  - bcryptjs (hash de senhas)
+  - Multer (upload de imagens)
+  - CORS (cross-origin resource sharing)
+
+Frontend:
+  - React 18
+  - TypeScript
+  - Vite (bundler e dev server)
+
+
+3. ESTRUTURA DO PROJETO
+--------------------------------------------------------------------------------
+
+Biblioteca Dutra/
+├── .env                              # Variaveis de ambiente (porta, JWT secret, credenciais)
+├── .gitignore                        # Arquivos ignorados pelo Git
+├── package.json                      # Dependencias do backend
+├── DOCUMENTACAO.txt                  # Este arquivo
+│
+├── src/                              # Codigo-fonte do backend
+│   ├── server.js                     # Servidor Express principal
+│   ├── database.js                   # Configuracao SQLite + criacao de tabelas
+│   ├── seed.js                       # Script para criar super administrador inicial
+│   ├── middleware/
+│   │   └── auth.js                   # Middleware de autenticacao JWT + verificacao de super admin
+│   └── routes/
+│       ├── auth.js                   # Rotas de autenticacao (login, criar admin, perfil)
+│       └── books.js                  # Rotas CRUD de livros
+│
+├── data/                             # Diretorio do banco de dados (criado automaticamente)
+│   └── biblioteca.db                 # Banco SQLite
+│
+├── uploads/                          # Fotos de capa dos livros (criado automaticamente)
+│
+└── frontend/                         # Codigo-fonte do frontend React
+    ├── index.html                    # HTML principal
+    ├── package.json                  # Dependencias do frontend
+    ├── vite.config.ts                # Configuracao do Vite com proxy para o backend
+    ├── tsconfig.json                 # Configuracao do TypeScript
+    └── src/
+        ├── main.tsx                  # Ponto de entrada do React
+        ├── App.tsx                   # Componente raiz (gerencia estado de autenticacao)
+        ├── types.ts                  # Definicoes de tipos TypeScript (Admin, Livro, etc.)
+        ├── api.ts                    # Servico de comunicacao com a API REST
+        ├── vite-env.d.ts             # Declaracao de tipos do Vite
+        └── components/
+            ├── Dashboard.tsx         # Tela principal (listagem de livros, busca, painel admin)
+            ├── BookCard.tsx          # Card de exibicao de cada livro
+            ├── BookModal.tsx         # Modal de cadastro e edicao de livros
+            ├── BookDetails.tsx       # Modal de detalhes do livro
+            └── LoginModal.tsx        # Modal de login do administrador
+
+
+4. BANCO DE DADOS
+--------------------------------------------------------------------------------
+Tabelas:
+
+  admins
+  ------
+  id          INTEGER PRIMARY KEY AUTOINCREMENT
+  nome        TEXT NOT NULL
+  email       TEXT UNIQUE NOT NULL
+  senha       TEXT NOT NULL (hash bcrypt)
+  role        TEXT NOT NULL DEFAULT 'super_admin'
+  criado_em   DATETIME DEFAULT CURRENT_TIMESTAMP
+
+  livros
+  ------
+  id            INTEGER PRIMARY KEY AUTOINCREMENT
+  isbn          TEXT UNIQUE NOT NULL
+  nome          TEXT NOT NULL
+  foto_capa     TEXT (caminho da imagem)
+  descricao     TEXT
+  autor         TEXT NOT NULL
+  criado_em     DATETIME DEFAULT CURRENT_TIMESTAMP
+  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+
+
+5. ENDPOINTS DA API
+--------------------------------------------------------------------------------
+
+Autenticacao:
+
+  POST /api/auth/login
+    Body: { "email": "...", "senha": "..." }
+    Response: { token, admin }
+    Descricao: Realiza login e retorna token JWT valido por 24h.
+
+  POST /api/auth/criar-admin  (restrito - super admin)
+    Headers: Authorization: Bearer <token>
+    Body: { "nome": "...", "email": "...", "senha": "..." }
+    Response: { admin }
+    Descricao: Cria um novo administrador. Apenas super admins podem usar.
+
+  GET /api/auth/perfil
+    Headers: Authorization: Bearer <token>
+    Response: { admin }
+    Descricao: Retorna os dados do administrador logado.
+
+Livros:
+
+  GET /api/livros
+    Query: ?busca=...&autor=...&page=1&limit=20
+    Response: { livros[], paginacao }
+    Descricao: Lista livros. Acesso publico. Suporta busca por nome, autor, ISBN.
+
+  GET /api/livros/:id
+    Response: { livro }
+    Descricao: Busca um livro por ID. Acesso publico.
+
+  GET /api/livros/isbn/:isbn
+    Response: { livro }
+    Descricao: Busca um livro por ISBN. Acesso publico.
+
+  POST /api/livros  (restrito - super admin)
+    Headers: Authorization: Bearer <token>
+    Body: FormData (isbn, nome, autor, descricao, foto_capa)
+    Response: { livro }
+    Descricao: Cadastra um novo livro. Aceita upload de imagem (max 5MB).
+
+  PUT /api/livros/:id  (restrito - super admin)
+    Headers: Authorization: Bearer <token>
+    Body: FormData (campos a atualizar + foto_capa opcional)
+    Response: { livro }
+    Descricao: Atualiza um livro existente.
+
+  DELETE /api/livros/:id  (restrito - super admin)
+    Headers: Authorization: Bearer <token>
+    Response: { mensagem }
+    Descricao: Remove um livro e sua foto do disco.
+
+
+6. CREDENCIAIS PADRAO
+--------------------------------------------------------------------------------
+  Email:    admin@alfredodutra.edu.br
+  Senha:    Admin@2026
+  Cargo:    super_admin
+
+  IMPORTANTE: Alterar a senha apos o primeiro acesso!
+
+
+7. COMO EXECUTAR
+--------------------------------------------------------------------------------
+
+Pre-requisitos:
+  - Node.js instalado (versao 18+)
+  - npm
+
+Passos:
+
+  1. Instalar dependencias do backend:
+     cd "Biblioteca Dutra"
+     npm install
+
+  2. Instalar dependencias do frontend:
+     cd "Biblioteca Dutra/frontend"
+     npm install
+
+  3. Criar super administrador (executar apenas uma vez):
+     cd "Biblioteca Dutra"
+     npm run seed
+
+  4. Iniciar o backend (Terminal 1):
+     cd "Biblioteca Dutra"
+     npm run dev
+     (Servidor rodando em http://localhost:3000)
+
+  5. Iniciar o frontend (Terminal 2):
+     cd "Biblioteca Dutra/frontend"
+     npm run dev
+     (Acessar http://localhost:5173)
+
+
+8. FUNCIONALIDADES
+--------------------------------------------------------------------------------
+
+Acesso Livre:
+  - Qualquer pessoa pode acessar o sistema e visualizar o catalogo de livros
+  - Busca por nome, autor ou ISBN
+  - Visualizacao de detalhes de cada livro (foto, sinopse, ISBN)
+
+Acesso Restrito (Super Admin):
+  - Botao "Acesso Restrito" no canto superior direito
+  - Login via modal com email e senha
+  - Apos login, o administrador pode:
+    * Cadastrar novos livros (ISBN, nome, autor, descricao, foto da capa)
+    * Editar livros existentes
+    * Excluir livros (com confirmacao)
+    * Fazer logout (volta ao modo publico)
+
+
+9. SEGURANCA
+--------------------------------------------------------------------------------
+  - Senhas armazenadas com hash bcrypt (10 rounds)
+  - Autenticacao via JWT com expiracao de 24 horas
+  - Middleware de verificacao de super admin em rotas restritas
+  - Upload de imagens restrito a JPG, PNG, WebP (max 5MB)
+  - Banco SQLite local (sem acesso externo)
+
+
+10. REPOSITORIO
+--------------------------------------------------------------------------------
+  GitHub: https://github.com/IsraelRocha31/Biblioteca-Dutra
+  Branch: main
+
+================================================================================
