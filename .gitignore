@@ -1,4 +1,25 @@
 node_modules/
-data/
-uploads/
+frontend/node_modules/
+frontend/dist/
+backend/node_modules/
+
+# Environment/secrets
 .env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# Vercel local state
+.vercel/
+
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/.env.local

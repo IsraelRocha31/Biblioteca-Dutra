@@ -1,232 +1,243 @@
 ================================================================================
   SISTEMA DE BIBLIOTECA - EE TEMPO INTEGRAL ALFREDO DUTRA
-  Documentação do Projeto
+  Documentação Técnica
 ================================================================================
 
-1. SOBRE O PROJETO
+1. ARQUITETURA
 --------------------------------------------------------------------------------
-Sistema de gerenciamento de acervo bibliográfico para a Escola Estadual de 
-Tempo Integral Alfredo Dutra, localizada na Avenida Esperanto, Centro, 
-Itapetinga - BA. O sistema permite o cadastro de livros com informações 
-como ISBN, nome, foto da capa, descrição e autor. Possui acesso livre para 
-consulta e acesso restrito (super administrador) para gerenciamento.
+O projeto utiliza um único repositório GitHub conectado a dois serviços:
 
-Escola: EE Colegio Estadual Alfredo Dutra - Tempo Integral
-Endereco: Avenida Esperanto, Centro, 45700-000 Itapetinga - BA
-Telefone: (77) 3261-1219
-Codigo INEP: 29282608
+  Vercel   -> executa frontend e TODO o backend/server
+  Supabase -> fornece SOMENTE o PostgreSQL e recebe migrations
+
+Estrutura:
+
+  Biblioteca-Dutra/
+  |-- frontend/
+  |-- backend/
+  |-- api/
+  |-- supabase/
+  |-- package.json
+  `-- vercel.json
+
+frontend/, backend/ e supabase/ ficam na raiz do mesmo repositório.
 
 
-2. TECNOLOGIAS UTILIZADAS
+2. FLUXO DE REQUISIÇÃO
 --------------------------------------------------------------------------------
-Backend:
-  - Node.js
-  - Express.js (framework web)
-  - SQLite3 (bananco de dados relacional leve)
-  - JWT (autenticacao via JSON Web Token)
-  - bcryptjs (hash de senhas)
-  - Multer (upload de imagens)
-  - CORS (cross-origin resource sharing)
+  Navegador
+      |
+      v
+  Frontend na Vercel
+      |
+      v
+  /api -> Backend Node/Express na Vercel
+      |
+      v
+  POSTGRES_URL
+      |
+      v
+  PostgreSQL do Supabase
 
-Frontend:
+O frontend não acessa Supabase diretamente.
+
+
+3. FRONTEND
+--------------------------------------------------------------------------------
+Tecnologias:
   - React 18
   - TypeScript
-  - Vite (bundler e dev server)
+  - Vite
+  - CSS modularizado por responsabilidade
+
+Responsabilidades:
+  - interface
+  - estado
+  - comportamento
+  - acessibilidade
+  - comunicação exclusiva com /api
+
+A aparência deve continuar centralizada em frontend/src/styles/.
 
 
-3. ESTRUTURA DO PROJETO
+4. BACKEND / SERVIDOR
 --------------------------------------------------------------------------------
+Tecnologias:
+  - Node.js 22+
+  - Express
+  - pg
+  - @vercel/functions
+  - JWT
+  - bcryptjs
+  - Multer em memória
 
-Biblioteca Dutra/
-├── .env                              # Variaveis de ambiente (porta, JWT secret, credenciais)
-├── .gitignore                        # Arquivos ignorados pelo Git
-├── package.json                      # Dependencias do backend
-├── DOCUMENTACAO.txt                  # Este arquivo
-│
-├── src/                              # Codigo-fonte do backend
-│   ├── server.js                     # Servidor Express principal
-│   ├── database.js                   # Configuracao SQLite + criacao de tabelas
-│   ├── seed.js                       # Script para criar super administrador inicial
-│   ├── middleware/
-│   │   └── auth.js                   # Middleware de autenticacao JWT + verificacao de super admin
-│   └── routes/
-│       ├── auth.js                   # Rotas de autenticacao (login, criar admin, perfil)
-│       └── books.js                  # Rotas CRUD de livros
-│
-├── data/                             # Diretorio do banco de dados (criado automaticamente)
-│   └── biblioteca.db                 # Banco SQLite
-│
-├── uploads/                          # Fotos de capa dos livros (criado automaticamente)
-│
-└── frontend/                         # Codigo-fonte do frontend React
-    ├── index.html                    # HTML principal
-    ├── package.json                  # Dependencias do frontend
-    ├── vite.config.ts                # Configuracao do Vite com proxy para o backend
-    ├── tsconfig.json                 # Configuracao do TypeScript
-    └── src/
-        ├── main.tsx                  # Ponto de entrada do React
-        ├── App.tsx                   # Componente raiz (gerencia estado de autenticacao)
-        ├── types.ts                  # Definicoes de tipos TypeScript (Admin, Livro, etc.)
-        ├── api.ts                    # Servico de comunicacao com a API REST
-        ├── vite-env.d.ts             # Declaracao de tipos do Vite
-        └── components/
-            ├── Dashboard.tsx         # Tela principal (listagem de livros, busca, painel admin)
-            ├── BookCard.tsx          # Card de exibicao de cada livro
-            ├── BookModal.tsx         # Modal de cadastro e edicao de livros
-            ├── BookDetails.tsx       # Modal de detalhes do livro
-            └── LoginModal.tsx        # Modal de login do administrador
+Responsabilidades:
+  - autenticação de administradores
+  - regras de negócio
+  - endpoints REST
+  - upload/leitura de capas
+  - acesso ao PostgreSQL
+
+O backend é executado na Vercel. Supabase não executa nenhuma parte do servidor.
 
 
-4. BANCO DE DADOS
+5. SUPABASE
 --------------------------------------------------------------------------------
-Tabelas:
+Supabase é usado somente para PostgreSQL.
 
-  admins
-  ------
-  id          INTEGER PRIMARY KEY AUTOINCREMENT
-  nome        TEXT NOT NULL
-  email       TEXT UNIQUE NOT NULL
-  senha       TEXT NOT NULL (hash bcrypt)
-  role        TEXT NOT NULL DEFAULT 'super_admin'
-  criado_em   DATETIME DEFAULT CURRENT_TIMESTAMP
+A pasta na raiz é:
 
-  livros
-  ------
-  id            INTEGER PRIMARY KEY AUTOINCREMENT
-  isbn          TEXT UNIQUE NOT NULL
-  nome          TEXT NOT NULL
-  foto_capa     TEXT (caminho da imagem)
-  descricao     TEXT
-  autor         TEXT NOT NULL
-  criado_em     DATETIME DEFAULT CURRENT_TIMESTAMP
-  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+  supabase/
+  |-- config.toml
+  |-- migrations/
+  `-- seed.sql
+
+Na integração GitHub do Supabase:
+
+  Working directory: .
+
+Novas migrations podem ser aplicadas automaticamente a partir da branch de
+produção.
+
+Não são utilizados pela aplicação:
+  - Supabase Auth
+  - Supabase Storage
+  - Supabase Edge Functions
+  - acesso do frontend pela Data API
 
 
-5. ENDPOINTS DA API
+6. BANCO
 --------------------------------------------------------------------------------
+Migration inicial:
 
-Autenticacao:
+  supabase/migrations/20260901225459_initial_schema.sql
 
-  POST /api/auth/login
-    Body: { "email": "...", "senha": "..." }
-    Response: { token, admin }
-    Descricao: Realiza login e retorna token JWT valido por 24h.
+Tabelas atuais:
+  - admins
+  - livros
 
-  POST /api/auth/criar-admin  (restrito - super admin)
-    Headers: Authorization: Bearer <token>
-    Body: { "nome": "...", "email": "...", "senha": "..." }
-    Response: { admin }
-    Descricao: Cria um novo administrador. Apenas super admins podem usar.
+A tabela livros armazena a capa no próprio PostgreSQL:
 
-  GET /api/auth/perfil
-    Headers: Authorization: Bearer <token>
-    Response: { admin }
-    Descricao: Retorna os dados do administrador logado.
+  foto_capa       BYTEA
+  foto_capa_mime  TEXT
 
-Livros:
+Os bytes da imagem não são carregados nas listagens. A API fornece:
 
-  GET /api/livros
-    Query: ?busca=...&autor=...&page=1&limit=20
-    Response: { livros[], paginacao }
-    Descricao: Lista livros. Acesso publico. Suporta busca por nome, autor, ISBN.
+  GET /api/livros/:id/capa
 
-  GET /api/livros/:id
-    Response: { livro }
-    Descricao: Busca um livro por ID. Acesso publico.
-
-  GET /api/livros/isbn/:isbn
-    Response: { livro }
-    Descricao: Busca um livro por ISBN. Acesso publico.
-
-  POST /api/livros  (restrito - super admin)
-    Headers: Authorization: Bearer <token>
-    Body: FormData (isbn, nome, autor, descricao, foto_capa)
-    Response: { livro }
-    Descricao: Cadastra um novo livro. Aceita upload de imagem (max 5MB).
-
-  PUT /api/livros/:id  (restrito - super admin)
-    Headers: Authorization: Bearer <token>
-    Body: FormData (campos a atualizar + foto_capa opcional)
-    Response: { livro }
-    Descricao: Atualiza um livro existente.
-
-  DELETE /api/livros/:id  (restrito - super admin)
-    Headers: Authorization: Bearer <token>
-    Response: { mensagem }
-    Descricao: Remove um livro e sua foto do disco.
+As tabelas têm RLS habilitado e nenhuma policy pública. O backend acessa o
+PostgreSQL diretamente com a credencial de servidor.
 
 
-6. CREDENCIAIS PADRAO
+7. VARIÁVEIS DE AMBIENTE
 --------------------------------------------------------------------------------
-  Email:    admin@alfredodutra.edu.br
-  Senha:    Admin@2026
-  Cargo:    super_admin
+A integração Vercel + Supabase fornece:
 
-  IMPORTANTE: Alterar a senha apos o primeiro acesso!
+POSTGRES_URL
+POSTGRES_PRISMA_URL
+POSTGRES_URL_NON_POOLING
+POSTGRES_USER
+POSTGRES_HOST
+POSTGRES_PASSWORD
+POSTGRES_DATABASE
+SUPABASE_PUBLISHABLE_KEY
+SUPABASE_SECRET_KEY
+SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+NEXT_PUBLIC_SUPABASE_URL
+
+O runtime atual do backend precisa de POSTGRES_URL.
+
+As chaves SUPABASE_* e NEXT_PUBLIC_SUPABASE_* podem ser sincronizadas pela
+integração, porém não são usadas pelo código e não são expostas pelo Vite.
+
+Variáveis próprias:
+
+JWT_SECRET
+SUPER_ADMIN_EMAIL
+SUPER_ADMIN_PASSWORD
+CORS_ORIGIN
+PORT
 
 
-7. COMO EXECUTAR
+8. SUPER ADMINISTRADOR
 --------------------------------------------------------------------------------
+O primeiro superadministrador pode ser criado automaticamente quando há uma
+tentativa de login com SUPER_ADMIN_EMAIL e SUPER_ADMIN_PASSWORD está definida.
+A senha é armazenada com bcrypt.
 
-Pre-requisitos:
-  - Node.js instalado (versao 18+)
-  - npm
+Bootstrap manual opcional:
 
-Passos:
-
-  1. Instalar dependencias do backend:
-     cd "Biblioteca Dutra"
-     npm install
-
-  2. Instalar dependencias do frontend:
-     cd "Biblioteca Dutra/frontend"
-     npm install
-
-  3. Criar super administrador (executar apenas uma vez):
-     cd "Biblioteca Dutra"
-     npm run seed
-
-  4. Iniciar o backend (Terminal 1):
-     cd "Biblioteca Dutra"
-     npm run dev
-     (Servidor rodando em http://localhost:3000)
-
-  5. Iniciar o frontend (Terminal 2):
-     cd "Biblioteca Dutra/frontend"
-     npm run dev
-     (Acessar http://localhost:5173)
+  npm run admin:bootstrap
 
 
-8. FUNCIONALIDADES
+9. DESENVOLVIMENTO LOCAL
 --------------------------------------------------------------------------------
+Instalar:
 
-Acesso Livre:
-  - Qualquer pessoa pode acessar o sistema e visualizar o catalogo de livros
-  - Busca por nome, autor ou ISBN
-  - Visualizacao de detalhes de cada livro (foto, sinopse, ISBN)
+  npm install
 
-Acesso Restrito (Super Admin):
-  - Botao "Acesso Restrito" no canto superior direito
-  - Login via modal com email e senha
-  - Apos login, o administrador pode:
-    * Cadastrar novos livros (ISBN, nome, autor, descricao, foto da capa)
-    * Editar livros existentes
-    * Excluir livros (com confirmacao)
-    * Fazer logout (volta ao modo publico)
+Copiar:
+
+  backend/.env.example -> backend/.env
+
+Preencher ao menos:
+
+  POSTGRES_URL
+  JWT_SECRET
+  SUPER_ADMIN_EMAIL
+  SUPER_ADMIN_PASSWORD
+
+Executar:
+
+  npm run dev
+
+Frontend: http://localhost:5173
+Backend:  http://localhost:3000/api
+Health:   http://localhost:3000/api/health
 
 
-9. SEGURANCA
+10. MIGRATIONS
 --------------------------------------------------------------------------------
-  - Senhas armazenadas com hash bcrypt (10 rounds)
-  - Autenticacao via JWT com expiracao de 24 horas
-  - Middleware de verificacao de super admin em rotas restritas
-  - Upload de imagens restrito a JPG, PNG, WebP (max 5MB)
-  - Banco SQLite local (sem acesso externo)
+Criar:
+
+  npm run db:new -- nome_da_mudanca
+
+Arquivos ficam em:
+
+  supabase/migrations/
+
+Não altere migration já aplicada em produção.
 
 
-10. REPOSITORIO
+11. DEPLOY
 --------------------------------------------------------------------------------
-  GitHub: https://github.com/IsraelRocha31/Biblioteca-Dutra
-  Branch: main
+Um push no GitHub alimenta os dois serviços:
+
+  Vercel:
+    - instala workspaces frontend/backend
+    - compila frontend
+    - publica frontend/dist
+    - executa api/index.js como entrada do Express
+
+  Supabase:
+    - lê ./supabase/
+    - aplica migrations PostgreSQL novas
+
+
+12. ENDPOINTS PRINCIPAIS
+--------------------------------------------------------------------------------
+GET    /api
+GET    /api/health
+POST   /api/auth/login
+POST   /api/auth/criar-admin
+GET    /api/auth/perfil
+GET    /api/livros
+GET    /api/livros/isbn/:isbn
+GET    /api/livros/:id/capa
+GET    /api/livros/:id
+POST   /api/livros
+PUT    /api/livros/:id
+DELETE /api/livros/:id
 
 ================================================================================

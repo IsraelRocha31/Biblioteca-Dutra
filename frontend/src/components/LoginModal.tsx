@@ -36,10 +36,10 @@ export default function LoginModal({ aberto, onLogin, onFechar }: Props) {
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onFechar()}>
-      <div className="modal-box">
+      <div className="modal-box" role="dialog" aria-modal="true">
         <div className="modal-header">
           <h3>Acesso Restrito</h3>
-          <button className="btn-fechar" onClick={onFechar}>&times;</button>
+          <button type="button" className="btn-fechar" onClick={onFechar} aria-label="Fechar">&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="campo">

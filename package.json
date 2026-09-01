@@ -1,23 +1,31 @@
 {
-  "name": "biblioteca-dutra-backend",
+  "name": "biblioteca-dutra",
   "version": "1.0.0",
-  "description": "Backend do sistema de biblioteca - Escola Estadual de Tempo Integral Alfredo Dutra",
-  "main": "src/server.js",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "seed": "node src/seed.js"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "sqlite3": "^5.1.7"
+    "dev": "concurrently -n FRONTEND,BACKEND -c auto \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\"",
+    "build": "npm run build --workspace frontend",
+    "vercel-build": "npm run build --workspace frontend",
+    "check": "npm run check --workspace backend && npm run build --workspace frontend",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "db:new": "supabase migration new",
+    "db:reset": "supabase db reset",
+    "db:lint": "supabase db lint --local",
+    "db:diff": "supabase db diff",
+    "admin:bootstrap": "npm run admin:bootstrap --workspace backend"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "concurrently": "^9.2.1",
+    "supabase": "2.116.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

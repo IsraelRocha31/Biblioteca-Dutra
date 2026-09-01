@@ -1,0 +1,3 @@
+-- Seed intencionalmente vazio.
+-- O primeiro superadministrador é criado pelo backend da Vercel a partir de
+-- SUPER_ADMIN_EMAIL e SUPER_ADMIN_PASSWORD na primeira tentativa de login.

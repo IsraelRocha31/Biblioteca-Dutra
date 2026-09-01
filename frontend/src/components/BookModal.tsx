@@ -16,6 +16,7 @@ export default function BookModal({ aberto, livro, onFechar, onSalvar }: Props) 
   const [foto, setFoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
 
   useEffect(() => {
     if (livro) {
@@ -37,6 +38,12 @@ export default function BookModal({ aberto, livro, onFechar, onSalvar }: Props) 
   const handleFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 4 * 1024 * 1024) {
+        setErro('A imagem deve ter no máximo 4MB.');
+        e.target.value = '';
+        return;
+      }
+      setErro('');
       setFoto(file);
       const reader = new FileReader();
       reader.onload = (ev) => setPreview(ev.target?.result as string);
@@ -46,6 +53,7 @@ export default function BookModal({ aberto, livro, onFechar, onSalvar }: Props) 
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setErro('');
     setSalvando(true);
 
     const formData = new FormData();
@@ -59,7 +67,7 @@ export default function BookModal({ aberto, livro, onFechar, onSalvar }: Props) 
       await onSalvar(formData);
       onFechar();
     } catch (err) {
-      alert('Erro: ' + (err instanceof Error ? err.message : 'desconhecido'));
+      setErro(err instanceof Error ? err.message : 'Erro desconhecido ao salvar o livro.');
     } finally {
       setSalvando(false);
     }
@@ -69,10 +77,10 @@ export default function BookModal({ aberto, livro, onFechar, onSalvar }: Props) 
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onFechar()}>
-      <div className="modal-box">
+      <div className="modal-box" role="dialog" aria-modal="true">
         <div className="modal-header">
           <h3>{livro ? 'Editar Livro' : 'Novo Livro'}</h3>
-          <button className="btn-fechar" onClick={onFechar}>&times;</button>
+          <button type="button" className="btn-fechar" onClick={onFechar} aria-label="Fechar">&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="campo">
@@ -89,14 +97,15 @@ export default function BookModal({ aberto, livro, onFechar, onSalvar }: Props) 
           </div>
           <div className="campo">
             <label>Descrição</label>
-            <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={3} placeholder="Sinopse do livro..." />
+            <textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Sinopse do livro..." />
           </div>
           <div className="campo">
             <label>Foto da Capa</label>
             <input type="file" onChange={handleFoto} accept="image/jpeg,image/png,image/webp" />
-            <small>JPG, PNG ou WebP. Máx 5MB.</small>
+            <small>JPG, PNG ou WebP. Máx 4MB.</small>
             {preview && <img src={preview} alt="Preview" className="preview-img" />}
           </div>
+          {erro && <p className="erro" role="alert">{erro}</p>}
           <div className="modal-botoes">
             <button type="button" onClick={onFechar} className="btn-cancelar">Cancelar</button>
             <button type="submit" disabled={salvando} className="btn-primary">

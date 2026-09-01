@@ -1,6 +1,6 @@
 import type { LoginResponse, ListaLivrosResponse, LivroResponse, Admin } from './types';
 
-const API = '';
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 function getToken(): string | null {
   return localStorage.getItem('token');
@@ -30,18 +30,26 @@ async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
     headers['Content-Type'] = 'application/json';
   }
 
-  const res = await fetch(API + url, {
-    ...options,
-    headers: { ...headers, ...(options.headers as Record<string, string>) }
-  });
+  try {
+    const res = await fetch(API + url, {
+      ...options,
+      headers: { ...headers, ...(options.headers as Record<string, string>) }
+    });
 
-  const data = await res.json();
+    const contentType = res.headers.get('content-type') || '';
+    const data = contentType.includes('application/json')
+      ? await res.json()
+      : { erro: await res.text() };
 
-  if (!res.ok) {
-    throw new Error(data.erro || 'Erro na requisição');
+    if (!res.ok) {
+      throw new Error(data.erro || `Erro HTTP ${res.status}`);
+    }
+
+    return data as T;
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error('Não foi possível comunicar com o servidor.');
   }
-
-  return data as T;
 }
 
 export async function login(email: string, senha: string): Promise<LoginResponse> {

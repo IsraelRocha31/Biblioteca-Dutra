@@ -11,11 +11,11 @@ interface Props {
 export default function BookCard({ livro, onVerDetalhes, onEditar, onDeletar, isAdmin }: Props) {
   return (
     <div className="card-livro">
-      <div className="card-capa">
+      <div className={`card-capa ${livro.foto_capa ? '' : 'is-empty'}`.trim()}>
         {livro.foto_capa ? (
-          <img src={livro.foto_capa} alt={livro.nome} />
+          <img src={livro.foto_capa} alt={`Capa de ${livro.nome}`} />
         ) : (
-          '📖'
+          <span className="sr-only">Livro sem capa cadastrada</span>
         )}
       </div>
       <div className="card-body">

@@ -11,18 +11,18 @@ export default function BookDetails({ aberto, livro, onFechar }: Props) {
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onFechar()}>
-      <div className="modal-box">
+      <div className="modal-box" role="dialog" aria-modal="true">
         <div className="modal-header">
           <h3>Detalhes do Livro</h3>
-          <button className="btn-fechar" onClick={onFechar}>&times;</button>
+          <button type="button" className="btn-fechar" onClick={onFechar} aria-label="Fechar">&times;</button>
         </div>
         <div className="detalhes-body">
           <div className="detalhes-linha">
-            <div className="detalhes-foto">
+            <div className={`detalhes-foto ${livro.foto_capa ? '' : 'is-empty'}`.trim()}>
               {livro.foto_capa ? (
-                <img src={livro.foto_capa} alt={livro.nome} />
+                <img src={livro.foto_capa} alt={`Capa de ${livro.nome}`} />
               ) : (
-                '📖'
+                <span className="sr-only">Livro sem capa cadastrada</span>
               )}
             </div>
             <div className="detalhes-info">

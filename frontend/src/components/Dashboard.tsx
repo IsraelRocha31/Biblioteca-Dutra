@@ -5,6 +5,7 @@ import BookCard from './BookCard';
 import BookModal from './BookModal';
 import BookDetails from './BookDetails';
 import LoginModal from './LoginModal';
+import ConfirmModal from './ConfirmModal';
 
 interface Props {
   admin: Admin | null;
@@ -21,6 +22,8 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
   const [detalhesAberto, setDetalhesAberto] = useState(false);
   const [livroDetalhes, setLivroDetalhes] = useState<Livro | null>(null);
   const [loginAberto, setLoginAberto] = useState(false);
+  const [livroParaExcluir, setLivroParaExcluir] = useState<{ id: number; nome: string } | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   const carregarLivros = useCallback(async (termo?: string) => {
     setCarregando(true);
@@ -56,10 +59,21 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
     setModalLivroAberto(true);
   };
 
-  const handleDeletar = async (id: number, nome: string) => {
-    if (!confirm(`Deseja realmente excluir "${nome}"?`)) return;
-    await deletarLivro(id);
-    carregarLivros(busca);
+  const handleDeletar = (id: number, nome: string) => {
+    setLivroParaExcluir({ id, nome });
+  };
+
+  const confirmarExclusao = async () => {
+    if (!livroParaExcluir) return;
+
+    setExcluindo(true);
+    try {
+      await deletarLivro(livroParaExcluir.id);
+      setLivroParaExcluir(null);
+      await carregarLivros(busca);
+    } finally {
+      setExcluindo(false);
+    }
   };
 
   const handleVerDetalhes = async (id: number) => {
@@ -69,10 +83,10 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
   };
 
   return (
-    <div>
+    <div className="app-shell">
       <header className="topo">
         <div className="topo-esq">
-          <span className="logo-mini">📚</span>
+          <span className="logo-mini" aria-hidden="true" />
           <div>
             <h2>Biblioteca</h2>
             <small>EE Alfredo Dutra</small>
@@ -146,6 +160,14 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
         aberto={detalhesAberto}
         livro={livroDetalhes}
         onFechar={() => { setDetalhesAberto(false); setLivroDetalhes(null); }}
+      />
+      <ConfirmModal
+        aberto={!!livroParaExcluir}
+        titulo="Excluir livro"
+        mensagem={livroParaExcluir ? `Deseja realmente excluir “${livroParaExcluir.nome}”? Esta ação não pode ser desfeita.` : ''}
+        confirmando={excluindo}
+        onConfirmar={confirmarExclusao}
+        onCancelar={() => !excluindo && setLivroParaExcluir(null)}
       />
     </div>
   );

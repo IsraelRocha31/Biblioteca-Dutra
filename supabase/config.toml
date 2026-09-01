@@ -1,0 +1,9 @@
+# A pasta supabase/ fica na raiz do repositório porque a integração GitHub
+# do projeto Supabase foi configurada com o diretório de trabalho ".".
+# Neste projeto, Supabase é usado SOMENTE como PostgreSQL/migrations.
+
+project_id = "biblioteca-dutra"
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
