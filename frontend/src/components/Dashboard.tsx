@@ -1,0 +1,152 @@
+import { useState, useEffect, useCallback } from 'react';
+import { getLivros, getLivro, criarLivro, atualizarLivro, deletarLivro } from '../api';
+import type { Livro, Admin } from '../types';
+import BookCard from './BookCard';
+import BookModal from './BookModal';
+import BookDetails from './BookDetails';
+import LoginModal from './LoginModal';
+
+interface Props {
+  admin: Admin | null;
+  onLogin: (admin: Admin, token: string) => void;
+  onLogout: () => void;
+}
+
+export default function Dashboard({ admin, onLogin, onLogout }: Props) {
+  const [livros, setLivros] = useState<Livro[]>([]);
+  const [busca, setBusca] = useState('');
+  const [carregando, setCarregando] = useState(true);
+  const [modalLivroAberto, setModalLivroAberto] = useState(false);
+  const [livroEditando, setLivroEditando] = useState<Livro | null>(null);
+  const [detalhesAberto, setDetalhesAberto] = useState(false);
+  const [livroDetalhes, setLivroDetalhes] = useState<Livro | null>(null);
+  const [loginAberto, setLoginAberto] = useState(false);
+
+  const carregarLivros = useCallback(async (termo?: string) => {
+    setCarregando(true);
+    try {
+      const data = await getLivros(termo);
+      setLivros(data.livros);
+    } catch {
+      setLivros([]);
+    } finally {
+      setCarregando(false);
+    }
+  }, []);
+
+  useEffect(() => { carregarLivros(); }, [carregarLivros]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => { carregarLivros(busca); }, 300);
+    return () => clearTimeout(timer);
+  }, [busca, carregarLivros]);
+
+  const handleSalvar = async (formData: FormData) => {
+    if (livroEditando) {
+      await atualizarLivro(livroEditando.id, formData);
+    } else {
+      await criarLivro(formData);
+    }
+    carregarLivros(busca);
+  };
+
+  const handleEditar = async (id: number) => {
+    const data = await getLivro(id);
+    setLivroEditando(data.livro);
+    setModalLivroAberto(true);
+  };
+
+  const handleDeletar = async (id: number, nome: string) => {
+    if (!confirm(`Deseja realmente excluir "${nome}"?`)) return;
+    await deletarLivro(id);
+    carregarLivros(busca);
+  };
+
+  const handleVerDetalhes = async (id: number) => {
+    const data = await getLivro(id);
+    setLivroDetalhes(data.livro);
+    setDetalhesAberto(true);
+  };
+
+  return (
+    <div>
+      <header className="topo">
+        <div className="topo-esq">
+          <span className="logo-mini">📚</span>
+          <div>
+            <h2>Biblioteca</h2>
+            <small>EE Alfredo Dutra</small>
+          </div>
+        </div>
+        <div className="topo-dir">
+          {admin ? (
+            <>
+              <span className="admin-badge">{admin.nome}</span>
+              <button onClick={onLogout} className="btn-sair">Sair</button>
+            </>
+          ) : (
+            <button onClick={() => setLoginAberto(true)} className="btn-restrito">
+              Acesso Restrito
+            </button>
+          )}
+        </div>
+      </header>
+
+      <div className="conteudo">
+        {admin && (
+          <div className="acoes-topo">
+            <button onClick={() => { setLivroEditando(null); setModalLivroAberto(true); }} className="btn-primary">
+              + Novo Livro
+            </button>
+          </div>
+        )}
+
+        <div className="campo-busca-wrap">
+          <input
+            type="text"
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar por nome, autor ou ISBN..."
+            className="campo-busca"
+          />
+        </div>
+
+        <div className="grid-livros">
+          {carregando ? (
+            <p className="vazio">Carregando livros...</p>
+          ) : livros.length === 0 ? (
+            <p className="vazio">Nenhum livro encontrado.</p>
+          ) : (
+            livros.map(livro => (
+              <BookCard
+                key={livro.id}
+                livro={livro}
+                isAdmin={!!admin}
+                onVerDetalhes={handleVerDetalhes}
+                onEditar={handleEditar}
+                onDeletar={handleDeletar}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      <LoginModal
+        aberto={loginAberto}
+        onLogin={onLogin}
+        onFechar={() => setLoginAberto(false)}
+      />
+      <BookModal
+        aberto={modalLivroAberto}
+        livro={livroEditando}
+        onFechar={() => { setModalLivroAberto(false); setLivroEditando(null); }}
+        onSalvar={handleSalvar}
+      />
+      <BookDetails
+        aberto={detalhesAberto}
+        livro={livroDetalhes}
+        onFechar={() => { setDetalhesAberto(false); setLivroDetalhes(null); }}
+      />
+    </div>
+  );
+}
