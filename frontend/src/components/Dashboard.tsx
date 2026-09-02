@@ -85,11 +85,12 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
 
   return (
     <div className="app-shell">
+      <a href="#conteudo-principal" className="skip-link">Pular para o conteúdo principal</a>
       <header className="topo">
         <div className="topo-esq">
           <span className="logo-mini" aria-hidden="true" />
           <div>
-            <h2>{appConfig.name}</h2>
+            <h1>{appConfig.name}</h1>
             <small>{appConfig.schoolName}</small>
           </div>
         </div>
@@ -97,38 +98,47 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
           {admin ? (
             <>
               <span className="admin-badge">{admin.nome}</span>
-              <button onClick={onLogout} className="btn-sair">Sair</button>
+              <button type="button" onClick={onLogout} className="btn-sair">Sair</button>
             </>
           ) : (
-            <button onClick={() => setLoginAberto(true)} className="btn-restrito">
+            <button type="button" onClick={() => setLoginAberto(true)} className="btn-restrito">
               Acesso Restrito
             </button>
           )}
         </div>
       </header>
 
-      <div className="conteudo">
+      <main className="conteudo" id="conteudo-principal" tabIndex={-1}>
         {admin && (
           <div className="acoes-topo">
-            <button onClick={() => { setLivroEditando(null); setModalLivroAberto(true); }} className="btn-primary">
+            <button type="button" onClick={() => { setLivroEditando(null); setModalLivroAberto(true); }} className="btn-primary">
               + Novo Livro
             </button>
           </div>
         )}
 
         <div className="campo-busca-wrap">
+          <label htmlFor="book-search" className="sr-only">Buscar livros</label>
           <input
-            type="text"
+            id="book-search"
+            name="busca"
+            type="search"
             value={busca}
             onChange={e => setBusca(e.target.value)}
-            placeholder="Buscar por nome, autor ou ISBN..."
+            placeholder="Buscar por nome, autor ou ISBN…"
             className="campo-busca"
           />
         </div>
 
-        <div className="grid-livros">
+        <p className="sr-only" role="status" aria-live="polite">
+          {carregando
+            ? 'Carregando livros…'
+            : `${livros.length} ${livros.length === 1 ? 'livro encontrado' : 'livros encontrados'}.`}
+        </p>
+
+        <div className="grid-livros" aria-busy={carregando}>
           {carregando ? (
-            <p className="vazio">Carregando livros...</p>
+            <p className="vazio">Carregando livros…</p>
           ) : livros.length === 0 ? (
             <p className="vazio">Nenhum livro encontrado.</p>
           ) : (
@@ -144,7 +154,7 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
             ))
           )}
         </div>
-      </div>
+      </main>
 
       <LoginModal
         aberto={loginAberto}

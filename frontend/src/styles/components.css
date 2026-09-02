@@ -1,3 +1,22 @@
+
+.skip-link {
+  position: fixed;
+  z-index: 200;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 700;
+  transform: translateY(calc(-100% - var(--space-4)));
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 .logo-mini {
   display: grid;
   width: 2.65rem;
@@ -13,7 +32,7 @@
   content: var(--symbol-brand);
 }
 
-.topo h2 {
+.topo h1 {
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 3vw, 1.8rem);
   font-weight: 700;
@@ -165,7 +184,7 @@ button:active:not(:disabled) {
   padding: var(--space-4);
 }
 
-.card-body h4 {
+.card-body h2 {
   font-family: var(--font-display);
   font-size: 1.25rem;
   line-height: 1.2;
@@ -218,6 +237,7 @@ button:active:not(:disabled) {
   width: min(100%, 42rem);
   max-height: calc(100vh - 2 * var(--space-5));
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -237,7 +257,7 @@ button:active:not(:disabled) {
   background: var(--color-surface);
 }
 
-.modal-header h3 {
+.modal-header h2 {
   font-family: var(--font-display);
   font-size: 1.45rem;
 }
@@ -325,7 +345,7 @@ button:active:not(:disabled) {
   min-width: 0;
 }
 
-.detalhes-info h4 {
+.detalhes-info h3 {
   margin-bottom: var(--space-5);
   font-family: var(--font-display);
   font-size: clamp(1.65rem, 4vw, 2.4rem);

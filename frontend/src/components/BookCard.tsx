@@ -10,7 +10,7 @@ interface Props {
 
 export default function BookCard({ livro, onVerDetalhes, onEditar, onDeletar, isAdmin }: Props) {
   return (
-    <div className="card-livro">
+    <article className="card-livro">
       <div className={`card-capa ${livro.foto_capa ? '' : 'is-empty'}`.trim()}>
         {livro.foto_capa ? (
           <img src={livro.foto_capa} alt={`Capa de ${livro.nome}`} />
@@ -19,19 +19,19 @@ export default function BookCard({ livro, onVerDetalhes, onEditar, onDeletar, is
         )}
       </div>
       <div className="card-body">
-        <h4>{livro.nome}</h4>
+        <h2>{livro.nome}</h2>
         <p className="autor">{livro.autor}</p>
         <span className="isbn">ISBN: {livro.isbn}</span>
         <div className="card-acoes">
-          <button className="btn-detalhes" onClick={() => onVerDetalhes(livro.id)}>Detalhes</button>
+          <button type="button" className="btn-detalhes" onClick={() => onVerDetalhes(livro.id)} aria-label={`Detalhes de ${livro.nome}`}>Detalhes</button>
           {isAdmin && (
             <>
-              <button className="btn-editar" onClick={() => onEditar(livro.id)}>Editar</button>
-              <button className="btn-deletar" onClick={() => onDeletar(livro.id, livro.nome)}>Excluir</button>
+              <button type="button" className="btn-editar" onClick={() => onEditar(livro.id)} aria-label={`Editar ${livro.nome}`}>Editar</button>
+              <button type="button" className="btn-deletar" onClick={() => onDeletar(livro.id, livro.nome)} aria-label={`Excluir ${livro.nome}`}>Excluir</button>
             </>
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
