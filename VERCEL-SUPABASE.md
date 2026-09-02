@@ -50,7 +50,9 @@ Nesta versão de testes, `SUPER_ADMIN_PASSWORD=admin123` fica versionado. Para t
 
 Depois do commit/push, o backend sincroniza o registro `managed_by_env = TRUE` no PostgreSQL. A alteração do e-mail também move a mesma conta gerenciada, em vez de criar contas duplicadas.
 
-A Vercel executa `admin:sync` durante o build. Se o Supabase ainda estiver aplicando a migration inicial, o build não quebra por ausência da coluna/tabela: a sincronização é repetida no primeiro login.
+A Vercel não executa `admin:sync` durante o build. Isso evita depender da ordem em que Vercel e Supabase processam o mesmo push. A sincronização do administrador ocorre antes do login, já em runtime.
+
+O `vercel.json` inclui explicitamente o `/.env` no bundle da Function (`includeFiles`), porque a API depende desse arquivo central para as configurações não fornecidas diretamente pelo ambiente da Vercel.
 
 ## Comunicação
 

@@ -4,6 +4,14 @@
   "installCommand": "npm install",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": [
+        ".env"
+      ],
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api",

@@ -105,9 +105,9 @@ git commit -m "chore: atualizar administrador"
 git push
 ```
 
-No deploy, o backend sincroniza essa configuração com a tabela `admins`. Se o administrador gerenciado pelo `.env` não existir, ele é criado. Se nome, e-mail ou senha forem alterados, o registro é atualizado.
+O backend sincroniza essa configuração com a tabela `admins` antes do login. Se o administrador gerenciado pelo `.env` não existir, ele é criado. Se nome, e-mail ou senha forem alterados, o registro é atualizado.
 
-A sincronização também roda antes do login, então um primeiro deploy em que a migration ainda esteja terminando se recupera automaticamente no primeiro acesso.
+O build da Vercel não acessa o banco. Isso evita uma corrida entre o deploy da Vercel e a aplicação das migrations pelo Supabase. A Function inclui explicitamente o `/.env` central no bundle de runtime.
 
 ## JWT
 
