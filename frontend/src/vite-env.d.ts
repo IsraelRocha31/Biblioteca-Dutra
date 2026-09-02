@@ -1,15 +1,20 @@
 /// <reference types="vite/client" />
 
+interface PublicAppConfig {
+  readonly name: string;
+  readonly schoolName: string;
+  readonly apiBasePath: string;
+  readonly superAdminEmail: string;
+  readonly authTokenStorageKey: string;
+  readonly searchDebounceMs: number;
+  readonly booksDefaultPageSize: number;
+  readonly coverMaxSizeMb: number;
+  readonly coverAllowedMimeTypes: readonly string[];
+}
+
+declare const __APP_CONFIG__: Readonly<PublicAppConfig>;
+
 interface ImportMetaEnv {
-  readonly APP_NAME: string;
-  readonly APP_SCHOOL_NAME: string;
-  readonly APP_API_BASE_PATH: string;
-  readonly SUPER_ADMIN_EMAIL: string;
-  readonly VITE_AUTH_TOKEN_STORAGE_KEY: string;
-  readonly UI_SEARCH_DEBOUNCE_MS: string;
-  readonly BOOKS_DEFAULT_PAGE_SIZE: string;
-  readonly BOOK_COVER_MAX_SIZE_MB: string;
-  readonly BOOK_COVER_ALLOWED_MIME_TYPES: string;
   readonly VITE_HTML_TITLE: string;
 }
 
