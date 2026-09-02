@@ -1,0 +1,584 @@
+================================================================================
+  SISTEMA DE BIBLIOTECA - EE TEMPO INTEGRAL ALFREDO DUTRA
+  DOCUMENTAÇÃO TÉCNICA CONSOLIDADA
+  Atualizada em 02/09/2026
+================================================================================
+
+0. ESCOPO DESTA DOCUMENTAÇÃO
+--------------------------------------------------------------------------------
+Esta documentação foi reconstruída a partir do histórico Git do projeto.
+
+Ponto de partida:
+  7da277e - IsraelRocha31 - 01/09/2026 16:39 - Primeiro commit do sistema
+
+Ela considera cada commit posterior até:
+  bc9cf68 - JoaoDEVWHADS - 02/09/2026 07:55 - corrigir inicialização da interface
+
+Também registra a revisão atual ainda não commitada, solicitada em 02/09/2026:
+  - remoção da pasta /src legada da raiz;
+  - centralização de todos os arquivos de documentação em /docs;
+  - reconstrução da documentação com base em todo o histórico.
+
+Para a lista exata de arquivos afetados por commit, consulte:
+  docs/HISTORICO.md
+
+
+1. ESTADO DO PRIMEIRO COMMIT (BASE HISTÓRICA)
+--------------------------------------------------------------------------------
+O commit 7da277e continha:
+
+  frontend/             React 18 + TypeScript + Vite
+  src/                  backend Node/Express
+  package.json          dependências/scripts do backend
+
+O backend original utilizava SQLite, armazenava capas em disco e mantinha o
+código do servidor diretamente em /src.
+
+O primeiro commit ainda NÃO possuía:
+  - backend/ separado;
+  - api/ para Vercel;
+  - supabase/;
+  - PostgreSQL;
+  - migrations;
+  - vercel.json;
+  - CSS modularizado em frontend/src/styles/;
+  - documentação, que foi adicionada no commit seguinte.
+
+
+2. DOCUMENTAÇÃO INICIAL DO ISRAEL
+--------------------------------------------------------------------------------
+Commit:
+  057581c - 01/09/2026 16:47 - Adiciona documentacao do projeto
+
+Foi criado DOCUMENTACAO.txt descrevendo a primeira arquitetura:
+  - backend Node/Express em /src;
+  - SQLite local;
+  - JWT e bcrypt;
+  - Multer;
+  - frontend React/Vite;
+  - CRUD de livros;
+  - login administrativo;
+  - banco local em data/biblioteca.db;
+  - capas em uploads/.
+
+Esta arquitetura tornou-se histórica após a migração seguinte.
+
+
+3. GRANDE MIGRAÇÃO PARA VERCEL + SUPABASE
+--------------------------------------------------------------------------------
+Commit:
+  15fc1ab - 01/09/2026 20:31 - preparar projeto para Vercel e Supabase
+
+Foi a maior mudança estrutural do projeto.
+
+GANHOS DE ARQUITETURA:
+  - criação de backend/ como backend oficial;
+  - criação de api/index.js como entrada serverless da Vercel;
+  - criação de supabase/;
+  - criação de vercel.json;
+  - conversão do repositório para npm workspaces frontend/backend;
+  - Node configurado para a nova arquitetura;
+  - PostgreSQL substituiu SQLite no backend novo.
+
+GANHOS NO BANCO:
+  - migration inicial PostgreSQL;
+  - tabelas admins e livros;
+  - extensão pg_trgm;
+  - índices trigram para nome/autor/ISBN;
+  - RLS habilitado sem policies públicas;
+  - capa migrada de arquivo físico para BYTEA + MIME no PostgreSQL.
+
+GANHOS NO BACKEND:
+  - pool PostgreSQL com pg;
+  - integração @vercel/functions;
+  - endpoint /api/health;
+  - tratamento central de erros;
+  - Multer em memória;
+  - CRUD PostgreSQL;
+  - endpoint dedicado GET /api/livros/:id/capa;
+  - paginação;
+  - busca ILIKE;
+  - autenticação e bootstrap do administrador.
+
+GANHOS NO FRONTEND:
+  - API adaptada ao novo formato de respostas;
+  - suporte às capas servidas por endpoint;
+  - ConfirmModal separado;
+  - ajustes nos componentes Dashboard, BookCard, BookDetails, BookModal e LoginModal;
+  - toda aparência visual separada em CSS.
+
+ARQUIVOS VISUAIS CRIADOS:
+  frontend/src/styles/base.css
+  frontend/src/styles/components.css
+  frontend/src/styles/index.css
+  frontend/src/styles/layout.css
+  frontend/src/styles/reset.css
+  frontend/src/styles/responsive.css
+  frontend/src/styles/tokens.css
+  frontend/src/styles/utilities.css
+
+Também foi criado frontend/DESIGNERS.md, agora movido para docs/DESIGNERS.md.
+
+DOCUMENTAÇÃO CRIADA NESSE COMMIT:
+  README.md
+  ROADMAP.md
+  VERCEL-SUPABASE.md
+  frontend/DESIGNERS.md
+  supabase/README.md
+
+Todos esses documentos estão agora centralizados em /docs.
+
+
+4. CENTRALIZAÇÃO DE CONFIGURAÇÃO E ADMINISTRADOR GERENCIADO
+--------------------------------------------------------------------------------
+Commit:
+  3f3d18f - 01/09/2026 21:22 - centralizar configuracao no env e integrar Vercel Supabase
+
+GANHOS:
+  - criação do /.env versionado como contrato central;
+  - backend passou a carregar o /.env da raiz;
+  - configuração hardcoded foi movida para variáveis;
+  - validações required/integer/csv foram adicionadas;
+  - frontend passou a carregar valores da raiz através do Vite;
+  - frontend/src/config/env.ts foi criado;
+  - scripts/check-env-contract.mjs foi criado;
+  - npm run env:check foi criado;
+  - npm run admin:sync foi criado;
+  - backend/src/scripts/sync-admin.js foi criado;
+  - migration managed_by_env foi criada.
+
+O administrador passou a ser sincronizado com SUPER_ADMIN_NAME,
+SUPER_ADMIN_EMAIL e SUPER_ADMIN_PASSWORD.
+
+A migration adicionou managed_by_env e um índice único parcial para existir no
+máximo um administrador controlado pelo ambiente.
+
+O validador de ambiente passou a:
+  - conferir as variáveis obrigatórias;
+  - detectar arquivos .env extras;
+  - conferir rewrites da Vercel;
+  - impedir process.env fora do loader do backend;
+  - controlar import.meta.env no frontend;
+  - detectar configurações hardcoded proibidas.
+
+OBSERVAÇÃO HISTÓRICA:
+O commit anterior havia criado /.env.example e backend/.env.example. Eles não
+foram removidos quando a regra de arquivo único foi implantada. No snapshot
+atual, continuam presentes, apesar de o env:check rejeitar qualquer .env* extra.
+
+
+5. CORREÇÃO DE INICIALIZAÇÃO DA API NA VERCEL
+--------------------------------------------------------------------------------
+Commit:
+  ea1973d - 01/09/2026 21:28
+
+ALTERAÇÕES:
+  - api/index.js passou a carregar app.js e env.js dinamicamente;
+  - falhas de inicialização passaram a retornar JSON com SERVER_INIT_FAILED;
+  - admin:sync foi retirado do vercel-build;
+  - o build deixou de depender do PostgreSQL/migrations;
+  - /.env passou a ser incluído explicitamente no bundle da Function;
+  - README e VERCEL-SUPABASE foram atualizados para refletir esse fluxo.
+
+
+6. CORREÇÃO DO INCLUDEFILES
+--------------------------------------------------------------------------------
+Commit:
+  8b8468f - 01/09/2026 21:31
+
+ALTERAÇÃO:
+  vercel.json mudou includeFiles de array para string:
+
+    "includeFiles": ".env"
+
+
+7. CORREÇÃO DO BUILD DO MONOREPO
+--------------------------------------------------------------------------------
+Commit:
+  009e330 - 01/09/2026 21:53
+
+ALTERAÇÕES:
+  - Node passou de >=22 para 22.x no root/backend/frontend;
+  - packageManager passou a ser npm@10.9.2;
+  - package-lock.json da raiz foi removido;
+  - frontend/package-lock.json foi removido;
+  - instalação da Vercel passou a usar npm install --package-lock=false;
+  - vercel-build passou a executar somente o build do frontend.
+
+Objetivo: evitar conflitos de instalação/build em workspaces na Vercel.
+
+
+8. CORREÇÃO DE INICIALIZAÇÃO DO FRONTEND
+--------------------------------------------------------------------------------
+Commit:
+  310f7ca - 01/09/2026 23:03
+
+GANHOS:
+  - criação de frontend/src/components/AppErrorBoundary.tsx;
+  - validação explícita da existência de #root em main.tsx;
+  - encapsulamento do App pelo Error Boundary;
+  - primeira estratégia de __APP_CONFIG__ injetado pelo Vite;
+  - redução da exposição de variáveis do .env no bundle;
+  - env:check passou a proibir import.meta.env no runtime React.
+
+
+9. REDEPLOY SEM ALTERAÇÃO DE ARQUIVOS
+--------------------------------------------------------------------------------
+Commit:
+  8a5e62d - 01/09/2026 23:21 - redeploy com Supabase correto
+
+Esse commit não possui diff de arquivos. Ele foi usado para provocar um novo
+deploy com a integração/projeto Supabase correto.
+
+
+10. CORREÇÃO DE SSL COM O SUPABASE
+--------------------------------------------------------------------------------
+Commit:
+  3dcfd33 - 01/09/2026 23:36
+
+GANHOS NO BACKEND:
+  - DB_SSL_USE_LIBPQ_COMPAT=true foi adicionado ao /.env;
+  - env.js ganhou parser boolean;
+  - database.js ganhou getConnectionString();
+  - a URL recebe uselibpqcompat=true quando configurado.
+
+Motivo: corrigir erros de conexão SSL/cadeia de certificado no PostgreSQL do
+Supabase em runtime.
+
+Esse commit também alterou novamente a estratégia de configuração do frontend,
+que foi refinada definitivamente no commit seguinte.
+
+
+11. CORREÇÃO DEFINITIVA DA INTERFACE
+--------------------------------------------------------------------------------
+Commit:
+  bc9cf68 - 02/09/2026 07:55
+
+GANHOS:
+  - frontend/vite.config.ts passou a validar toda configuração pública no build;
+  - o Vite injeta um objeto __APP_CONFIG__;
+  - frontend/src/config/env.ts apenas consome esse objeto tipado;
+  - runtime React deixou de acessar import.meta.env;
+  - vite-env.d.ts foi simplificado;
+  - main.tsx validou o elemento root e manteve AppErrorBoundary;
+  - AppErrorBoundary ganhou mensagens/classes finais;
+  - components.css ganhou .app-error;
+  - scripts/check-env-contract.mjs passou a aceitar zero acessos a import.meta.env;
+  - DOCUMENTACAO.txt, README.md e VERCEL-SUPABASE.md foram atualizados.
+
+Resultado: o frontend deixa de depender diretamente do objeto de ambiente do
+Vite em runtime, evitando a interface em branco causada por configuração
+indisponível/incorreta.
+
+
+12. REVISÃO E ORGANIZAÇÃO ATUAL - 02/09/2026
+--------------------------------------------------------------------------------
+ALTERAÇÕES DESTA ENTREGA:
+
+1. Remoção do /src legado da raiz.
+
+Arquivos removidos:
+  src/database.js
+  src/middleware/auth.js
+  src/routes/auth.js
+  src/routes/books.js
+  src/seed.js
+  src/server.js
+
+Esses arquivos pertenciam à arquitetura SQLite inicial. O backend oficial é:
+  backend/src/
+
+2. Centralização da documentação em /docs.
+
+Movidos:
+  DOCUMENTACAO.txt        -> docs/DOCUMENTACAO.txt
+  README.md               -> docs/README.md
+  ROADMAP.md              -> docs/ROADMAP.md
+  VERCEL-SUPABASE.md      -> docs/VERCEL-SUPABASE.md
+  frontend/DESIGNERS.md   -> docs/DESIGNERS.md
+  supabase/README.md      -> docs/SUPABASE.md
+
+Adicionado:
+  docs/HISTORICO.md
+
+
+13. ARQUITETURA ATUAL
+--------------------------------------------------------------------------------
+
+Biblioteca-Dutra/
+|-- api/
+|   `-- index.js
+|-- backend/
+|   |-- package.json
+|   `-- src/
+|       |-- app.js
+|       |-- database.js
+|       |-- server.js
+|       |-- seed.js
+|       |-- config/env.js
+|       |-- middleware/auth.js
+|       |-- routes/auth.js
+|       |-- routes/books.js
+|       |-- scripts/sync-admin.js
+|       `-- services/bootstrap-admin.js
+|-- frontend/
+|   |-- index.html
+|   |-- package.json
+|   |-- vite.config.ts
+|   `-- src/
+|       |-- App.tsx
+|       |-- api.ts
+|       |-- main.tsx
+|       |-- types.ts
+|       |-- config/env.ts
+|       |-- components/
+|       `-- styles/
+|-- supabase/
+|   |-- config.toml
+|   |-- migrations/
+|   `-- seed.sql
+|-- docs/
+|-- scripts/
+|-- .env
+|-- .env.example
+|-- package.json
+`-- vercel.json
+
+Não existe mais /src na raiz.
+
+
+14. FRONTEND ATUAL
+--------------------------------------------------------------------------------
+Tecnologias:
+  - React 18.3
+  - React DOM 18.3
+  - TypeScript 5.5
+  - Vite 5.4
+
+Responsabilidades:
+  - interface pública;
+  - autenticação no cliente;
+  - busca/listagem;
+  - formulários de CRUD;
+  - exibição de capas;
+  - modais;
+  - tratamento de erro de renderização;
+  - comunicação exclusiva com /api.
+
+APRESENTAÇÃO VISUAL:
+Toda aparência fica em frontend/src/styles/.
+
+O React define estrutura e comportamento; CSS define aparência. Não foram
+encontrados estilos inline nos componentes atuais.
+
+Arquivos CSS:
+  tokens.css
+  reset.css
+  base.css
+  layout.css
+  components.css
+  utilities.css
+  responsive.css
+  index.css
+
+
+15. BACKEND ATUAL
+--------------------------------------------------------------------------------
+Tecnologias:
+  - Node.js 22.x
+  - Express 4.21
+  - pg 8.23
+  - @vercel/functions
+  - bcryptjs
+  - jsonwebtoken
+  - multer
+  - cors
+  - dotenv
+
+Entrada local:
+  backend/src/server.js
+
+Aplicação Express:
+  backend/src/app.js
+
+Entrada Vercel:
+  api/index.js
+
+Banco:
+  backend/src/database.js
+
+Configuração:
+  backend/src/config/env.js
+
+
+16. ENDPOINTS ATUAIS
+--------------------------------------------------------------------------------
+API base atual:
+  /api
+
+Sistema:
+  GET  /api
+  GET  /api/health
+
+Autenticação:
+  POST /api/auth/login
+  POST /api/auth/criar-admin   (JWT + super admin)
+  GET  /api/auth/perfil        (JWT)
+
+Livros:
+  GET    /api/livros
+  GET    /api/livros/isbn/:isbn
+  GET    /api/livros/:id/capa
+  GET    /api/livros/:id
+  POST   /api/livros           (JWT + super admin)
+  PUT    /api/livros/:id       (JWT + super admin)
+  DELETE /api/livros/:id       (JWT + super admin)
+
+GET /api/livros suporta:
+  busca
+  autor
+  page
+  limit
+
+A busca textual consulta nome, ISBN, autor e descrição com ILIKE.
+
+
+17. BANCO ATUAL
+--------------------------------------------------------------------------------
+Migrations:
+  20260901225459_initial_schema.sql
+  20260901234122_env_managed_admin.sql
+
+Tabelas:
+  admins
+  livros
+
+admins:
+  id
+  nome
+  email
+  senha
+  role
+  criado_em
+  managed_by_env
+
+livros:
+  id
+  isbn
+  nome
+  foto_capa BYTEA
+  foto_capa_mime
+  descricao
+  autor
+  criado_em
+  atualizado_em
+
+A capa não é enviada nas listagens. A API devolve uma URL para o endpoint de
+capa, evitando carregar BYTEA em cada consulta de catálogo.
+
+
+18. VARIÁVEIS DE AMBIENTE
+--------------------------------------------------------------------------------
+O /.env atual contém 45 variáveis.
+
+Grupos:
+  - Vercel/Supabase;
+  - identidade/rotas;
+  - administrador/autenticação;
+  - frontend/desenvolvimento;
+  - backend/HTTP;
+  - PostgreSQL;
+  - livros/upload/paginação.
+
+A conexão runtime usa POSTGRES_URL.
+
+Configuração pública do frontend é validada em frontend/vite.config.ts e
+injetada em __APP_CONFIG__.
+
+Configuração do backend é acessada somente por backend/src/config/env.js.
+
+
+19. SEGURANÇA E ACESSO
+--------------------------------------------------------------------------------
+- senha persistida com bcrypt;
+- JWT com expiração configurável;
+- middleware de autenticação;
+- middleware de super admin;
+- limite de senha configurável;
+- uploads limitados por tamanho e MIME;
+- Express sem x-powered-by;
+- RLS habilitado nas tabelas do Supabase;
+- frontend não acessa banco diretamente;
+- secrets do servidor não são injetados no objeto público do frontend.
+
+ATENÇÃO:
+O /.env atual contém credenciais de teste versionadas para o super administrador
+e JWT. Elas devem ser substituídas por variáveis seguras em produção.
+
+
+20. DESENVOLVIMENTO LOCAL
+--------------------------------------------------------------------------------
+Instalar:
+  npm install
+
+Executar frontend + backend:
+  npm run dev
+
+Frontend padrão:
+  http://localhost:5173
+
+Backend padrão:
+  http://localhost:3000
+
+Health:
+  http://localhost:3000/api/health
+
+
+21. COMANDOS PRINCIPAIS
+--------------------------------------------------------------------------------
+  npm run dev
+  npm run build
+  npm run vercel-build
+  npm run check
+  npm run env:check
+
+Supabase:
+  npm run supabase:start
+  npm run supabase:stop
+  npm run supabase:status
+  npm run db:new -- nome
+  npm run db:reset
+  npm run db:lint
+  npm run db:diff
+
+Administrador:
+  npm run admin:bootstrap
+  npm run admin:sync
+
+
+22. DOCUMENTOS ATUAIS
+--------------------------------------------------------------------------------
+Todos ficam em /docs:
+
+  docs/README.md
+      Índice e visão geral.
+
+  docs/DOCUMENTACAO.txt
+      Este documento; especificação técnica consolidada.
+
+  docs/HISTORICO.md
+      Histórico detalhado, commit a commit, com arquivos afetados.
+
+  docs/VERCEL-SUPABASE.md
+      Deploy, integração e fluxo de runtime.
+
+  docs/SUPABASE.md
+      Schema e migrations.
+
+  docs/DESIGNERS.md
+      Contrato visual/CSS para designers.
+
+  docs/ROADMAP.md
+      Próximas funcionalidades e evolução arquitetural.
+
+================================================================================
