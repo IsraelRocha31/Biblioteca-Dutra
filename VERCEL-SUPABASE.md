@@ -74,6 +74,6 @@ A pasta é `./supabase/`, portanto o Working directory é `.` e a branch de prod
 
 Todo runtime da aplicação lê configuração a partir do único `/.env` da raiz. A Vercel pode sobrescrever esses valores com Environment Variables do projeto; isso é usado principalmente pelas 12 variáveis sincronizadas pela integração com Supabase.
 
-O backend acessa ambiente somente por `backend/src/config/env.js`. O frontend acessa ambiente somente por `frontend/src/config/env.ts`; o Vite usa `envDir` apontando para a raiz e limita os prefixos expostos ao navegador.
+O backend acessa ambiente somente por `backend/src/config/env.js`. No frontend, `frontend/vite.config.ts` lê e valida o `/.env` durante o build e injeta somente um objeto público tipado. `frontend/src/config/env.ts` consome esse objeto; o runtime React não acessa `import.meta.env`.
 
 Use `npm run env:check` antes do commit para verificar se o contrato continua centralizado. O diretório `supabase/migrations/` permanece independente do `.env`, pois a integração GitHub do próprio Supabase é responsável por aplicar o schema.

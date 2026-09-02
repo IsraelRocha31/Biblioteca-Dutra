@@ -384,3 +384,14 @@ button:active:not(:disabled) {
   font-weight: 700;
   cursor: pointer;
 }
+
+.app-error {
+  max-width: 48rem;
+  margin: 4rem auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.app-error h1 {
+  margin-bottom: 0.75rem;
+}

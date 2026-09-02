@@ -11,13 +11,13 @@ Sistema de biblioteca escolar em um único repositório GitHub conectado à **Ve
 O arquivo `/.env` da raiz é o **único arquivo de ambiente do repositório** e o contrato central de runtime. `frontend/`, `backend/`, `api/` e os comandos do projeto não possuem `.env` próprio.
 
 - `backend/src/config/env.js` é o único loader de ambiente do backend.
-- `frontend/src/config/env.ts` é o único loader usado pelos componentes React.
-- `frontend/vite.config.ts` carrega o `.env` da raiz com `envDir`, inclusive no workspace `frontend/`.
-- Variáveis secretas do servidor não são expostas ao bundle. O frontend recebe somente os prefixos seguros configurados no Vite.
+- `frontend/vite.config.ts` lê e valida a configuração pública necessária durante o build.
+- `frontend/src/config/env.ts` recebe somente o objeto público já validado pelo Vite; o navegador não lê `import.meta.env` diretamente.
+- Variáveis secretas do servidor não são expostas ao bundle.
 - `supabase/migrations/` é a exceção: o schema é aplicado pela integração GitHub do Supabase e não depende do `.env` para saber qual projeto receberá a migration.
 - CSS continua sendo a fonte de verdade visual e não é transformado em configuração de ambiente.
 
-A checagem `npm run env:check` valida o contrato e acusa acessos a `process.env`/`import.meta.env` fora dos módulos centrais.
+A checagem `npm run env:check` valida o contrato, bloqueia `.env` duplicado e impede acesso a `import.meta.env` dentro do runtime React.
 
 As principais categorias no `.env` são: integração Vercel/Supabase, identidade da aplicação, autenticação, desenvolvimento local, HTTP, pool PostgreSQL, paginação e upload de capas.
 

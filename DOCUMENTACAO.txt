@@ -243,7 +243,7 @@ DELETE /api/livros/:id
 
 CONFIGURAÇÃO CENTRAL (.env)
 ==========================
-O /.env da raiz é o único arquivo de ambiente e a fonte única de configuração de runtime. O backend usa apenas backend/src/config/env.js e o frontend usa apenas frontend/src/config/env.ts. O Vite carrega o .env da raiz. Portas, CORS, JWT, bcrypt, administrador padrão, identidade da aplicação, paginação, upload, cache e parâmetros do pool PostgreSQL são definidos nesse arquivo.
+O /.env da raiz é o único arquivo de ambiente e a fonte única de configuração de runtime. O backend usa backend/src/config/env.js. No frontend, frontend/vite.config.ts lê e valida a configuração pública durante o build e injeta um objeto já pronto em frontend/src/config/env.ts; o navegador não acessa import.meta.env diretamente. Portas, CORS, JWT, bcrypt, administrador padrão, identidade da aplicação, paginação, upload, cache e parâmetros do pool PostgreSQL são definidos no /.env.
 
 A exceção é supabase/migrations/: o schema do banco é aplicado pela integração GitHub do Supabase e não precisa ler o .env. CSS também permanece responsável exclusivamente pelo visual.
 

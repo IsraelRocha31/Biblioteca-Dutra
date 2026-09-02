@@ -16,15 +16,15 @@ export default class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Erro não tratado na interface:', error, info);
+    console.error('Erro ao renderizar a interface da Biblioteca Dutra:', error, info);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <main className="app-fatal-error" role="alert">
+        <main className="app-error" role="alert">
           <h1>Biblioteca indisponível</h1>
-          <p>Ocorreu um erro ao carregar a interface. Atualize a página ou tente novamente.</p>
+          <p>Ocorreu um erro ao carregar a interface.</p>
         </main>
       );
     }

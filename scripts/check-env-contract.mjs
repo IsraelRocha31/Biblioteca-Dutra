@@ -112,7 +112,7 @@ if (!rewriteSources.has(apiBasePath) || !rewriteSources.has(`${apiBasePath}/:pat
 
 const sourceRoots = ['backend/src', 'frontend/src', 'api'];
 const allowedProcessEnv = new Set(['backend/src/config/env.js']);
-const allowedImportMetaEnv = new Set(['frontend/src/config/env.ts']);
+const allowedImportMetaEnv = new Set();
 
 for (const sourceRoot of sourceRoots) {
   for (const file of walk(join(root, sourceRoot))) {
