@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "concurrently -n FRONTEND,BACKEND -c auto \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\"",
     "build": "npm run build --workspace frontend",
-    "vercel-build": "npm run env:check && npm run build --workspace frontend",
+    "vercel-build": "npm run build --workspace frontend",
     "check": "npm run env:check && npm run check --workspace backend && npm run build --workspace frontend",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
@@ -28,6 +28,7 @@
     "supabase": "2.116.0"
   },
   "engines": {
-    "node": ">=22"
-  }
+    "node": "22.x"
+  },
+  "packageManager": "npm@10.9.2"
 }
