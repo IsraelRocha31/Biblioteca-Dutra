@@ -34,7 +34,6 @@ export default function AccessibleModal({
 
   useLayoutEffect(() => {
     const appRoot = document.getElementById('root');
-    const previousBodyOverflow = document.body.style.overflow;
     const appRootWasInert = appRoot?.hasAttribute('inert') ?? false;
 
     previousFocusRef.current = document.activeElement instanceof HTMLElement
@@ -42,7 +41,7 @@ export default function AccessibleModal({
       : null;
 
     appRoot?.setAttribute('inert', '');
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
 
     const focusTarget = initialFocusRef?.current ?? dialogRef.current;
     focusTarget?.focus();
@@ -51,7 +50,7 @@ export default function AccessibleModal({
       if (appRoot && !appRootWasInert) {
         appRoot.removeAttribute('inert');
       }
-      document.body.style.overflow = previousBodyOverflow;
+      document.body.classList.remove('modal-open');
 
       const previousFocus = previousFocusRef.current;
       if (previousFocus?.isConnected) {

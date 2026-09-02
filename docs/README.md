@@ -32,8 +32,7 @@ Biblioteca-Dutra/
 ├── docs/                        # toda a documentação
 ├── scripts/
 │   └── check-env-contract.mjs
-├── .env                         # contrato central de configuração
-├── .env.example                 # legado da migração inicial; ver observação abaixo
+├── .env                         # único arquivo de ambiente e contrato central
 ├── package.json
 └── vercel.json
 ```
@@ -75,6 +74,7 @@ O navegador não acessa o Supabase diretamente.
 - TypeScript 5
 - Vite 5
 - CSS separado por responsabilidade em `frontend/src/styles/`
+- modal reutilizável acessível com foco inicial, focus trap, `Escape`, retorno de foco e conteúdo de fundo inerte
 
 ### Backend
 
@@ -107,11 +107,11 @@ npm run env:check
 
 verifica o contrato de configuração, o uso de `process.env`/`import.meta.env`, os rewrites da Vercel e valores hardcoded proibidos.
 
-### Observação importante sobre `.env.example`
+### Contrato de ambiente validado
 
-O commit `15fc1ab` adicionou `/.env.example` e `backend/.env.example`. O commit posterior `3f3d18f` definiu a regra de **um único `/.env`** e o validador passou a rejeitar qualquer outro arquivo cujo nome comece com `.env`.
+O projeto mantém **somente `/.env`**. Os arquivos legados `/.env.example` e `backend/.env.example` foram removidos para que a regra criada em `scripts/check-env-contract.mjs` corresponda ao próprio repositório. Arquivos `.env` em subpastas continuam bloqueados pelo `.gitignore` e pelo validador.
 
-Esses dois exemplos continuam presentes no snapshot recebido, portanto representam uma inconsistência histórica já existente no projeto. Esta revisão de documentação não os removeu porque o pedido foi limitado à pasta `src/` legada e à organização da documentação.
+O comando `npm run env:check` passa com 45 variáveis e acesso centralizado.
 
 ## Desenvolvimento local
 
@@ -157,3 +157,5 @@ As migrations ficam em `supabase/migrations/`. Não altere migrations já aplica
 ## Estado atual da documentação
 
 Antes desta reorganização, os documentos estavam espalhados na raiz, em `frontend/` e em `supabase/`. Agora todos ficam em `docs/`, conforme solicitado. O histórico original de cada documento foi preservado no Git por movimentação/renomeação dos arquivos.
+
+A revisão de 02/09/2026 também documenta o commit de acessibilidade `1136ccf` e a correção posterior que eliminou arquivos `.env*` duplicados e removeu a escrita direta de `document.body.style` do modal.

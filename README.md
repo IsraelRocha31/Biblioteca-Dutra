@@ -1,6 +1,6 @@
 # Biblioteca Dutra
 
-Sistema de biblioteca escolar em um único repositório GitHub, com frontend React/Vite, backend Node/Express, deploy na Vercel e PostgreSQL no Supabase.
+Sistema de biblioteca escolar em um único repositório GitHub, com frontend React/Vite, backend Node/Express, deploy na Vercel e PostgreSQL no Supabase. O catálogo público possui busca e detalhes de livros; a área administrativa oferece autenticação e CRUD. A interface inclui navegação por teclado e modais acessíveis.
 
 ## Estrutura do projeto
 
@@ -14,7 +14,7 @@ Biblioteca-Dutra/
 ├── supabase/                    # configuração, migrations e seed do PostgreSQL
 ├── docs/                        # toda a documentação detalhada do projeto
 ├── scripts/                     # scripts de validação/manutenção
-├── .env                         # contrato central de configuração
+├── .env                         # único arquivo de ambiente e contrato central
 ├── package.json
 ├── vercel.json
 └── README.md                    # ponto de entrada da documentação
@@ -61,6 +61,8 @@ npm run env:check
 npm run check
 npm run build
 ```
+
+`npm run env:check` exige que `/.env` seja o único arquivo `.env*` do repositório e verifica variáveis obrigatórias, rewrites da Vercel, acesso centralizado ao ambiente e configurações hardcoded proibidas.
 
 ## Migrations
 

@@ -162,9 +162,10 @@ O validador de ambiente passou a:
   - detectar configurações hardcoded proibidas.
 
 OBSERVAÇÃO HISTÓRICA:
-O commit anterior havia criado /.env.example e backend/.env.example. Eles não
-foram removidos quando a regra de arquivo único foi implantada. No snapshot
-atual, continuam presentes, apesar de o env:check rejeitar qualquer .env* extra.
+O commit anterior havia criado /.env.example e backend/.env.example. Eles
+permaneceram por alguns commits em conflito com a regra posterior de arquivo
+único. Na revisão atual, essa inconsistência foi eliminada: ambos foram removidos
+e npm run env:check passa com somente /.env.
 
 
 5. CORREÇÃO DE INICIALIZAÇÃO DA API NA VERCEL
@@ -271,9 +272,11 @@ Vite em runtime, evitando a interface em branco causada por configuração
 indisponível/incorreta.
 
 
-12. REVISÃO E ORGANIZAÇÃO ATUAL - 02/09/2026
+12. CENTRALIZAÇÃO DOCUMENTAL E REMOÇÃO DO LEGADO - 02/09/2026
 --------------------------------------------------------------------------------
-ALTERAÇÕES DESTA ENTREGA:
+COMMITS:
+  7ef1b9f - Centraliza documentação e remove estrutura legada
+  f43241d - Centraliza toda documentacao na pasta docs
 
 1. Remoção do /src legado da raiz.
 
@@ -302,7 +305,36 @@ Adicionado:
   docs/HISTORICO.md
 
 
-13. ARQUITETURA ATUAL
+13. ACESSIBILIDADE E CONTRATO DE AMBIENTE - 02/09/2026
+--------------------------------------------------------------------------------
+Commit de acessibilidade:
+  1136ccf - fix: melhora acessibilidade e foco dos modais
+
+GANHOS:
+  - AccessibleModal.tsx criado como componente reutilizável;
+  - foco entra no diálogo assim que ele abre;
+  - Tab e Shift+Tab permanecem dentro do diálogo;
+  - Escape fecha o diálogo;
+  - foco retorna ao elemento que abriu o diálogo;
+  - conteúdo de fundo recebe inert enquanto o modal está aberto;
+  - labels de formulários foram ligados aos inputs;
+  - nomes acessíveis dos botões foram melhorados;
+  - hierarquia de títulos e regiões semânticas foi corrigida;
+  - Dashboard ganhou link de salto e anúncios de status.
+
+CORREÇÕES DESTA REVISÃO:
+  - removidos /.env.example e backend/.env.example;
+  - removido backend/.env local presente no ZIP de trabalho;
+  - npm run env:check passa com somente /.env;
+  - AccessibleModal deixou de escrever document.body.style.overflow;
+  - o React agora alterna somente body.modal-open;
+  - overflow: hidden passou para frontend/src/styles/base.css.
+
+Resultado: contrato de ambiente coerente com o repositório e contrato visual
+100% preservado no CSS.
+
+
+14. ARQUITETURA ATUAL
 --------------------------------------------------------------------------------
 
 Biblioteca-Dutra/
@@ -340,14 +372,13 @@ Biblioteca-Dutra/
 |-- docs/
 |-- scripts/
 |-- .env
-|-- .env.example
 |-- package.json
 `-- vercel.json
 
 Não existe mais /src na raiz.
 
 
-14. FRONTEND ATUAL
+15. FRONTEND ATUAL
 --------------------------------------------------------------------------------
 Tecnologias:
   - React 18.3
@@ -361,15 +392,18 @@ Responsabilidades:
   - busca/listagem;
   - formulários de CRUD;
   - exibição de capas;
-  - modais;
+  - modais acessíveis;
   - tratamento de erro de renderização;
   - comunicação exclusiva com /api.
 
 APRESENTAÇÃO VISUAL:
 Toda aparência fica em frontend/src/styles/.
 
-O React define estrutura e comportamento; CSS define aparência. Não foram
-encontrados estilos inline nos componentes atuais.
+O React define estrutura e comportamento; CSS define aparência. Não existem
+estilos inline nem escrita direta de propriedades visuais por JavaScript.
+
+AccessibleModal.tsx alterna apenas a classe funcional body.modal-open. A regra
+visual overflow: hidden fica em frontend/src/styles/base.css.
 
 Arquivos CSS:
   tokens.css
@@ -382,7 +416,7 @@ Arquivos CSS:
   index.css
 
 
-15. BACKEND ATUAL
+16. BACKEND ATUAL
 --------------------------------------------------------------------------------
 Tecnologias:
   - Node.js 22.x
@@ -411,7 +445,7 @@ Configuração:
   backend/src/config/env.js
 
 
-16. ENDPOINTS ATUAIS
+17. ENDPOINTS ATUAIS
 --------------------------------------------------------------------------------
 API base atual:
   /api
@@ -443,7 +477,7 @@ GET /api/livros suporta:
 A busca textual consulta nome, ISBN, autor e descrição com ILIKE.
 
 
-17. BANCO ATUAL
+18. BANCO ATUAL
 --------------------------------------------------------------------------------
 Migrations:
   20260901225459_initial_schema.sql
@@ -477,7 +511,7 @@ A capa não é enviada nas listagens. A API devolve uma URL para o endpoint de
 capa, evitando carregar BYTEA em cada consulta de catálogo.
 
 
-18. VARIÁVEIS DE AMBIENTE
+19. VARIÁVEIS DE AMBIENTE
 --------------------------------------------------------------------------------
 O /.env atual contém 45 variáveis.
 
@@ -497,8 +531,11 @@ injetada em __APP_CONFIG__.
 
 Configuração do backend é acessada somente por backend/src/config/env.js.
 
+Existe somente um arquivo de ambiente no projeto: /.env.
+O comando npm run env:check valida 45 variáveis e rejeita qualquer .env* extra.
 
-19. SEGURANÇA E ACESSO
+
+20. SEGURANÇA E ACESSO
 --------------------------------------------------------------------------------
 - senha persistida com bcrypt;
 - JWT com expiração configurável;
@@ -516,7 +553,7 @@ O /.env atual contém credenciais de teste versionadas para o super administrado
 e JWT. Elas devem ser substituídas por variáveis seguras em produção.
 
 
-20. DESENVOLVIMENTO LOCAL
+21. DESENVOLVIMENTO LOCAL
 --------------------------------------------------------------------------------
 Instalar:
   npm install
@@ -534,7 +571,7 @@ Health:
   http://localhost:3000/api/health
 
 
-21. COMANDOS PRINCIPAIS
+22. COMANDOS PRINCIPAIS
 --------------------------------------------------------------------------------
   npm run dev
   npm run build
@@ -556,7 +593,7 @@ Administrador:
   npm run admin:sync
 
 
-22. DOCUMENTOS ATUAIS
+23. DOCUMENTOS ATUAIS
 --------------------------------------------------------------------------------
 A raiz mantém somente:
 

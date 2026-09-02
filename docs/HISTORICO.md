@@ -2,7 +2,7 @@
 
 Este arquivo foi reconstruído diretamente do histórico Git do ZIP recebido. O ponto de partida é o **primeiro commit do Israel** (`7da277e`). Para cada commit, são registrados autor, data, mensagem, resumo técnico e lista exata de arquivos alterados.
 
-> Além dos commits abaixo, a revisão atual remove `src/` legado e centraliza a documentação em `docs/`. Essas mudanças ainda não possuem hash porque fazem parte desta entrega.
+> O histórico inclui a reorganização documental e o commit de acessibilidade. Ao final há uma seção separada para as correções ainda não commitadas desta revisão.
 
 ## 1. `7da277e` — Primeiro commit do sistema
 
@@ -259,30 +259,66 @@ Corrigiu definitivamente a interface e configuração do frontend: Vite valida/i
 - `M` `frontend/vite.config.ts` — modificado
 - `M` `scripts/check-env-contract.mjs` — modificado
 
-## Revisão atual — organização solicitada em 02/09/2026
+## 12. `7ef1b9f` — Centraliza documentação e remove estrutura legada
 
-### Remoção do backend legado
+- **Autor:** JoaoDEVWHADS
+- **Data:** 02/09/2026 10:27
+- **Hash completo:** `7ef1b9f58322e4e1253cb09415508d32d52e4629`
 
-Foram removidos da raiz:
+Removeu o backend SQLite legado de `/src` e criou a documentação consolidada em `docs/`, incluindo índice, histórico, roadmap, guia de designers e documentos de Supabase/Vercel.
 
-- `src/database.js`
-- `src/middleware/auth.js`
-- `src/routes/auth.js`
-- `src/routes/books.js`
-- `src/seed.js`
-- `src/server.js`
+### Arquivos principais afetados
 
-Esses arquivos pertenciam ao backend SQLite original. O runtime atual usa `backend/src/` e `api/index.js`.
+- `D` `src/database.js`
+- `D` `src/middleware/auth.js`
+- `D` `src/routes/auth.js`
+- `D` `src/routes/books.js`
+- `D` `src/seed.js`
+- `D` `src/server.js`
+- `A` `docs/DESIGNERS.md`
+- `A` `docs/DOCUMENTACAO.txt`
+- `A` `docs/HISTORICO.md`
+- `A` `docs/README.md`
+- `A` `docs/ROADMAP.md`
+- `A` `docs/SUPABASE.md`
+- `A` `docs/VERCEL-SUPABASE.md`
 
-### Centralização dos documentos
+## 13. `f43241d` — Centraliza toda documentacao na pasta docs
 
-- `DOCUMENTACAO.txt` → `docs/DOCUMENTACAO.txt`
-- `ROADMAP.md` → `docs/ROADMAP.md`
-- `VERCEL-SUPABASE.md` → `docs/VERCEL-SUPABASE.md`
-- `frontend/DESIGNERS.md` → `docs/DESIGNERS.md`
-- `supabase/README.md` → `docs/SUPABASE.md`
-- novo `docs/README.md` como índice da documentação detalhada
-- novo `docs/HISTORICO.md`
-- `README.md` permanece na raiz como a única documentação fora de `docs/` e funciona apenas como porta de entrada do repositório
+- **Autor:** JoaoDEVWHADS
+- **Data:** 02/09/2026 12:27
+- **Hash completo:** `f43241d1aa1fb128eee2b21e7a25d9595634e93c`
 
-Com isso, toda documentação detalhada passa a existir exclusivamente em `docs/`, enquanto a raiz mantém somente `README.md`.
+Consolidou a documentação detalhada em `docs/`, mantendo apenas o README de entrada na raiz e eliminando cópias redundantes em outras pastas.
+
+## 14. `1136ccf` — fix: melhora acessibilidade e foco dos modais
+
+- **Autor:** JoaoDEVWHADS
+- **Data:** 02/09/2026 12:56
+- **Hash completo:** `1136ccf3c12ea12ddfae60ee72aa8eac39b04820`
+
+Criou `AccessibleModal.tsx` e corrigiu o fluxo de foco dos diálogos. Também melhorou labels, nomes acessíveis, hierarquia de títulos, foco visível, skip link e anúncios para leitores de tela.
+
+### Arquivos afetados
+
+- `A` `frontend/src/components/AccessibleModal.tsx`
+- `M` `frontend/src/components/BookCard.tsx`
+- `M` `frontend/src/components/BookDetails.tsx`
+- `M` `frontend/src/components/BookModal.tsx`
+- `M` `frontend/src/components/ConfirmModal.tsx`
+- `M` `frontend/src/components/Dashboard.tsx`
+- `M` `frontend/src/components/LoginModal.tsx`
+- `M` `frontend/src/styles/base.css`
+- `M` `frontend/src/styles/components.css`
+
+## Revisão atual — contrato de ambiente, CSS e documentação
+
+Alterações ainda sem hash de commit nesta entrega:
+
+- `D` `/.env.example` — removido; o contrato exige somente `/.env`;
+- `D` `backend/.env.example` — removido;
+- `backend/.env` local/ignorado removido do ZIP de trabalho;
+- `M` `frontend/src/components/AccessibleModal.tsx` — deixou de escrever `document.body.style.overflow`;
+- `M` `frontend/src/styles/base.css` — recebeu `body.modal-open { overflow: hidden; }`;
+- documentação atualizada para refletir o estado real;
+- `npm run env:check` validado com sucesso: 45 variáveis, um único `/.env`.

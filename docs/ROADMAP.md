@@ -2,6 +2,51 @@
 
 O estado atual é um catálogo público com administração de livros. O próximo passo é evoluir para um sistema operacional de biblioteca escolar sem perder a arquitetura já construída: frontend React, backend Express na Vercel, PostgreSQL no Supabase e apresentação isolada em CSS.
 
+
+## Próximos incrementos de baixo risco
+
+Antes das grandes entidades de empréstimos e leitores, o código atual já oferece pontos de expansão que podem ser entregues sem uma mudança estrutural grande:
+
+### A. Paginação real no frontend
+
+O backend já devolve `paginacao`, mas `Dashboard.tsx` utiliza apenas a primeira página. Adicionar **Anterior/Próxima**, número da página e total de resultados aproveita uma capacidade que já existe na API.
+
+### B. Filtros avançados usando a API atual
+
+`GET /api/livros` já aceita `autor`, mas o frontend usa somente `busca`. A interface pode ganhar filtros por autor e, depois, novos campos como gênero, editora e ano.
+
+### C. Uso do endpoint de ISBN
+
+Já existe `GET /api/livros/isbn/:isbn`. O formulário pode consultar o ISBN antes de salvar para avisar imediatamente que o título já existe e, futuramente, integrar uma API bibliográfica para preencher dados automaticamente.
+
+### D. Remover ou trocar a capa
+
+Hoje a edição preserva a capa antiga quando nenhuma nova imagem é enviada. Falta uma ação explícita para **remover a capa existente** sem excluir o livro.
+
+### E. Gestão de administradores
+
+O backend já possui `POST /api/auth/criar-admin`, mas não existe tela para essa função. Criar uma área de administração permite gerenciar contas sem chamadas manuais à API.
+
+### F. Testes automatizados e CI
+
+Adicionar Vitest/Testing Library para componentes e testes de API, além de uma ação do GitHub que execute `env:check`, backend check, TypeScript/build e testes em cada pull request. O fluxo de acessibilidade dos modais deve entrar como teste crítico.
+
+### G. Segurança de login
+
+Adicionar rate limiting no endpoint de login, registro de tentativas suspeitas e política de sessão. Em uma evolução maior, avaliar autenticação com cookie `HttpOnly` em vez de token no `localStorage`.
+
+### H. Estado de erro e retry no catálogo
+
+Hoje uma falha em `getLivros()` termina visualmente como lista vazia. Diferenciar **“nenhum livro encontrado”** de **“falha ao carregar”**, com botão **Tentar novamente**, evita esconder problemas de rede/API.
+
+### I. URL compartilhável para busca e livro
+
+Persistir busca/página na query string e criar rota pública por livro permite copiar links e voltar à mesma posição do catálogo.
+
+### J. Auditoria de acessibilidade contínua
+
+Além do modal já corrigido, incluir axe/Playwright no CI, testar zoom de 200%, contraste, navegação somente por teclado e `prefers-reduced-motion`.
+
 ## Prioridade 1 — transformar catálogo em biblioteca
 
 ### 1. Exemplares físicos

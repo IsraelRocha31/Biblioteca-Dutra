@@ -84,7 +84,7 @@ Foi criada a arquitetura nova em paralelo ao backend antigo:
 
 ### `3f3d18f` — configuração central
 
-A configuração foi centralizada em `/.env`:
+A configuração foi centralizada em `/.env`, hoje o **único arquivo `.env*` permitido no repositório**:
 
 - backend passou a ler apenas o `.env` da raiz;
 - parâmetros de app, HTTP, banco, autenticação, paginação e upload deixaram de ficar hardcoded;
@@ -129,7 +129,7 @@ O frontend deixou de acessar `import.meta.env` em runtime. `frontend/vite.config
 
 ## `.env` central
 
-O `.env` atual possui 45 variáveis divididas em grupos:
+O `.env` atual possui 45 variáveis divididas em grupos. `npm run env:check` confirma o contrato e rejeita qualquer `.env*` adicional:
 
 - 12 chaves da integração Vercel/Supabase;
 - identidade e rotas da aplicação;

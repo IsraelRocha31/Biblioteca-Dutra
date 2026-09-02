@@ -28,7 +28,7 @@ frontend/src/styles/
 - `config/env.ts` = configuração pública já validada pelo Vite.
 - `src/styles/*.css` = apresentação visual.
 
-A arquitetura atual não usa estilos inline nos componentes React.
+A arquitetura atual não usa estilos inline nos componentes React e não escreve propriedades visuais diretamente por JavaScript. Para impedir a rolagem da página quando um modal está aberto, o React apenas alterna a classe `modal-open` no `<body>`; a regra `overflow: hidden` permanece em `base.css`.
 
 ## O que o CSS controla
 
@@ -128,7 +128,7 @@ Breakpoints, ajustes mobile/tablet e preferências de movimento.
 1. Designers podem mudar qualquer regra CSS.
 2. Desenvolvedores não devem colocar cor, fonte, sombra, spacing, animação ou layout direto em TSX.
 3. Nomes de classes usados pelos componentes são contrato de integração. Não renomeie uma classe sem atualizar o TSX correspondente.
-4. Estados funcionais podem vir do React (`disabled`, `is-empty`, etc.); a aparência desses estados pertence ao CSS.
+4. Estados funcionais podem vir do React (`disabled`, `is-empty`, `modal-open`, etc.); a aparência desses estados pertence ao CSS.
 5. Foco visível, contraste, conteúdo `sr-only` e `prefers-reduced-motion` são requisitos de acessibilidade e não devem ser removidos.
 6. Se uma mudança exigir criar/remover/reordenar elementos, ela deixa de ser apenas visual e precisa de alteração no React.
 
@@ -137,3 +137,8 @@ Breakpoints, ajustes mobile/tablet e preferências de movimento.
 A separação visual foi introduzida no commit `15fc1ab`, que criou os sete arquivos CSS acima, adicionou `frontend/DESIGNERS.md` e removeu estilos/decisões visuais dos componentes em favor de classes CSS.
 
 No commit `bc9cf68`, o CSS ganhou também o estado `.app-error` usado pelo `AppErrorBoundary`, mantendo até o fallback visual fora do TSX.
+
+
+## Acessibilidade dos modais
+
+O componente `frontend/src/components/AccessibleModal.tsx` centraliza o comportamento acessível de todos os diálogos. Ele controla foco, `Tab`/`Shift+Tab`, `Escape`, `aria-modal`, `inert` e devolução do foco. O componente **não define aparência**; `modal-overlay`, `modal-box` e o bloqueio de rolagem são estilizados exclusivamente em CSS.
