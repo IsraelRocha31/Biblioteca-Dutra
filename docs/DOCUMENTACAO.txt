@@ -558,10 +558,16 @@ Administrador:
 
 22. DOCUMENTOS ATUAIS
 --------------------------------------------------------------------------------
-Todos ficam em /docs:
+A raiz mantém somente:
+
+  README.md
+      Porta de entrada do repositório. Resume arquitetura, execução e aponta
+      para a documentação detalhada.
+
+Toda a documentação detalhada fica exclusivamente em /docs:
 
   docs/README.md
-      Índice e visão geral.
+      Índice e visão geral da documentação.
 
   docs/DOCUMENTACAO.txt
       Este documento; especificação técnica consolidada.
@@ -580,5 +586,8 @@ Todos ficam em /docs:
 
   docs/ROADMAP.md
       Próximas funcionalidades e evolução arquitetural.
+
+Não existem mais arquivos de documentação em frontend/, supabase/ ou soltos na
+raiz além de README.md.
 
 ================================================================================

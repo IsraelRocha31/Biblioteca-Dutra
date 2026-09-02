@@ -1,164 +1,66 @@
 # Biblioteca Dutra
 
-Sistema de biblioteca escolar em um único repositório GitHub conectado à **Vercel** e ao **Supabase**.
+Sistema de biblioteca escolar em um único repositório GitHub, com frontend React/Vite, backend Node/Express, deploy na Vercel e PostgreSQL no Supabase.
 
-- **Vercel:** frontend React/Vite + todo o backend Node/Express.
-- **Supabase:** somente PostgreSQL e migrations.
-- **GitHub:** fonte de verdade do código, do contrato `.env` e do schema do banco.
-
-## `.env` como fonte única de configuração
-
-O arquivo `/.env` da raiz é o **único arquivo de ambiente do repositório** e o contrato central de runtime. `frontend/`, `backend/`, `api/` e os comandos do projeto não possuem `.env` próprio.
-
-- `backend/src/config/env.js` é o único loader de ambiente do backend.
-- `frontend/vite.config.ts` lê e valida a configuração pública necessária durante o build.
-- `frontend/src/config/env.ts` recebe somente o objeto público já validado pelo Vite; o navegador não lê `import.meta.env` diretamente.
-- Variáveis secretas do servidor não são expostas ao bundle.
-- `supabase/migrations/` é a exceção: o schema é aplicado pela integração GitHub do Supabase e não depende do `.env` para saber qual projeto receberá a migration.
-- CSS continua sendo a fonte de verdade visual e não é transformado em configuração de ambiente.
-
-A checagem `npm run env:check` valida o contrato, bloqueia `.env` duplicado e impede acesso a `import.meta.env` dentro do runtime React.
-
-As principais categorias no `.env` são: integração Vercel/Supabase, identidade da aplicação, autenticação, desenvolvimento local, HTTP, pool PostgreSQL, paginação e upload de capas.
-
-
-## Estrutura
+## Estrutura do projeto
 
 ```text
 Biblioteca-Dutra/
-├── frontend/                 # React + TypeScript + Vite -> Vercel
-├── backend/                  # Node + Express -> Vercel
-├── api/                      # entrada da Vercel para o backend
-├── supabase/                 # somente PostgreSQL/migrations -> Supabase
-│   ├── config.toml
-│   ├── migrations/
-│   ├── seed.sql
-│   └── README.md
-├── .env                      # ÚNICO arquivo de configuração do projeto
+├── api/                         # entrada serverless da Vercel
+├── backend/                     # backend Node.js + Express
+│   └── src/
+├── frontend/                    # frontend React + TypeScript + Vite
+│   └── src/
+├── supabase/                    # configuração, migrations e seed do PostgreSQL
+├── docs/                        # toda a documentação detalhada do projeto
+├── scripts/                     # scripts de validação/manutenção
+├── .env                         # contrato central de configuração
 ├── package.json
 ├── vercel.json
-└── .gitignore
+└── README.md                    # ponto de entrada da documentação
 ```
 
-`frontend/`, `backend/` e `supabase/` são pastas irmãs na raiz.
+A antiga pasta `src/` da raiz foi removida. O backend atual fica exclusivamente em `backend/src/`.
 
-## Fluxo
+## Arquitetura
 
 ```text
-                         GitHub
-                        /      \
-                       v        v
-                  Vercel       Supabase
-                 /      \          |
-          frontend     backend   PostgreSQL
-                         |
-                         +----------+
-                           POSTGRES_URL
+GitHub
+   |
+   +-------------------+
+   |                   |
+   v                   v
+Vercel              Supabase
+   |                   |
+   +-- frontend         +-- PostgreSQL
+   +-- backend              + migrations
+          |
+          +----------------> PostgreSQL
 ```
 
-O navegador nunca acessa o Supabase diretamente.
-
-## `.env` versionado
-
-O arquivo `.env` da raiz **faz parte do Git** e é o contrato central de configuração.
-
-Ele contém as 12 chaves da integração Vercel/Supabase:
-
-```text
-POSTGRES_URL
-POSTGRES_PRISMA_URL
-POSTGRES_URL_NON_POOLING
-POSTGRES_USER
-POSTGRES_HOST
-POSTGRES_PASSWORD
-POSTGRES_DATABASE
-SUPABASE_PUBLISHABLE_KEY
-SUPABASE_SECRET_KEY
-SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-NEXT_PUBLIC_SUPABASE_URL
-```
-
-No Git essas 12 chaves ficam sem valores. Os valores reais são injetados pela integração da Vercel e têm prioridade sobre o arquivo carregado pelo `dotenv`.
-
-Isso é importante porque `POSTGRES_URL`, `POSTGRES_PASSWORD` e `SUPABASE_SECRET_KEY`, quando preenchidos, são credenciais reais e não devem ser commitados.
-
-Não existe `.env.local`, `.env.example` nem `.env` dentro de subpastas: **somente `/.env` é aceito**.
-
-## Administrador controlado pelo Git
-
-O `.env` também define a conta administrativa gerenciada pelo projeto:
-
-```text
-SUPER_ADMIN_NAME=Super Administrador
-SUPER_ADMIN_EMAIL=admin@alfredodutra.edu.br
-SUPER_ADMIN_PASSWORD=admin123
-```
-
-Nesta versão de testes, a senha fica explícita no `.env` como `admin123`. O backend nunca grava esse texto puro no PostgreSQL: antes de persistir, gera um hash bcrypt.
-
-Para trocar a credencial de teste, edite `SUPER_ADMIN_PASSWORD` no `.env` e depois:
-
-```bash
-git add .env
-git commit -m "chore: atualizar administrador"
-git push
-```
-
-O backend sincroniza essa configuração com a tabela `admins` antes do login. Se o administrador gerenciado pelo `.env` não existir, ele é criado. Se nome, e-mail ou senha forem alterados, o registro é atualizado.
-
-O build da Vercel não acessa o banco. Isso evita uma corrida entre o deploy da Vercel e a aplicação das migrations pelo Supabase. A Function inclui explicitamente o `/.env` central no bundle de runtime.
-
-## JWT
-
-Nesta versão de testes, `JWT_SECRET` também possui um valor de teste versionado para o projeto funcionar imediatamente. Em produção, sobrescreva-o por uma Environment Variable segura da Vercel.
-
-## Supabase conectado ao GitHub
-
-Como `supabase/` está na raiz:
-
-```text
-Working directory: .
-```
-
-Com **Deploy to production** habilitado, novas migrations em `supabase/migrations/` são aplicadas à branch de produção.
-
-O projeto não usa Supabase Auth, Storage ou Edge Functions.
-
-## Banco e capas
-
-As capas são persistidas no próprio PostgreSQL:
-
-- `foto_capa BYTEA`;
-- `foto_capa_mime TEXT`;
-- limite de 4 MiB;
-- leitura em `GET /api/livros/:id/capa`.
+O navegador não acessa o Supabase diretamente. O frontend chama a API e o backend acessa o PostgreSQL.
 
 ## Desenvolvimento local
 
 ```bash
 npm install
-```
-
-Para desenvolvimento local, edite o mesmo `/.env` central. Não existe segundo arquivo de ambiente.
-
-Defina o administrador versionado com:
-
-```bash
-edite `SUPER_ADMIN_PASSWORD` no `.env` e faça commit/push
-```
-
-Depois:
-
-```bash
 npm run dev
 ```
 
-Frontend: `http://localhost:5173`
+Por padrão:
 
-Backend: `http://localhost:3000/api`
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:3000`
+- API: `http://localhost:3000/api`
+- Health: `http://localhost:3000/api/health`
 
-Health: `http://localhost:3000/api/health`
+## Verificações
+
+```bash
+npm run env:check
+npm run check
+npm run build
+```
 
 ## Migrations
 
@@ -166,17 +68,18 @@ Health: `http://localhost:3000/api/health`
 npm run db:new -- nome_da_mudanca
 ```
 
-Os arquivos ficam em `supabase/migrations/`. Não altere migrations já aplicadas em produção; crie uma nova.
+As migrations ficam em `supabase/migrations/`. Não altere migrations já aplicadas em produção; crie uma nova migration.
 
-## Deploy
+## Documentação
 
-```text
-git push
-   |
-   |-- Vercel   -> backend + frontend
-   `-- Supabase -> migrations PostgreSQL
-```
+Toda documentação detalhada fica exclusivamente em [`docs/`](docs/):
 
-## CSS e equipe de design
+- [`docs/DOCUMENTACAO.txt`](docs/DOCUMENTACAO.txt) — documentação técnica consolidada;
+- [`docs/HISTORICO.md`](docs/HISTORICO.md) — evolução do sistema desde o primeiro commit do Israel;
+- [`docs/VERCEL-SUPABASE.md`](docs/VERCEL-SUPABASE.md) — arquitetura de deploy e integração;
+- [`docs/SUPABASE.md`](docs/SUPABASE.md) — banco, schema e migrations;
+- [`docs/DESIGNERS.md`](docs/DESIGNERS.md) — contrato da camada visual/CSS para designers;
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — próximas evoluções;
+- [`docs/README.md`](docs/README.md) — índice completo da documentação.
 
-React/TypeScript cuida de estrutura e comportamento. Toda aparência visual fica em `frontend/src/styles/`. Consulte `frontend/DESIGNERS.md`.
+O `README.md` da raiz é a única exceção: ele serve apenas como porta de entrada do repositório e aponta para `docs/`.

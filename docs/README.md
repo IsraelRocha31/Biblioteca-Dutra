@@ -1,6 +1,6 @@
 # Biblioteca Dutra — documentação
 
-Esta pasta concentra **toda a documentação do projeto Biblioteca Dutra**.
+Esta pasta concentra **toda a documentação detalhada do projeto Biblioteca Dutra**. O único documento mantido fora dela é o `README.md` da raiz, usado como porta de entrada do repositório.
 
 O repositório começou no commit `7da277e` de IsraelRocha31 como uma aplicação com frontend React/Vite e backend Node/Express + SQLite em `src/`. A partir dos commits seguintes, o sistema foi migrado para uma arquitetura de monorepo com `frontend/`, `backend/`, Vercel e PostgreSQL do Supabase. O histórico completo está em [HISTORICO.md](HISTORICO.md).
 

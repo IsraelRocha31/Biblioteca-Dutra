@@ -277,11 +277,12 @@ Esses arquivos pertenciam ao backend SQLite original. O runtime atual usa `backe
 ### Centralização dos documentos
 
 - `DOCUMENTACAO.txt` → `docs/DOCUMENTACAO.txt`
-- `README.md` → `docs/README.md`
 - `ROADMAP.md` → `docs/ROADMAP.md`
 - `VERCEL-SUPABASE.md` → `docs/VERCEL-SUPABASE.md`
 - `frontend/DESIGNERS.md` → `docs/DESIGNERS.md`
 - `supabase/README.md` → `docs/SUPABASE.md`
+- novo `docs/README.md` como índice da documentação detalhada
 - novo `docs/HISTORICO.md`
+- `README.md` permanece na raiz como a única documentação fora de `docs/` e funciona apenas como porta de entrada do repositório
 
-Assim, toda documentação passa a ter um único local: `docs/`.
+Com isso, toda documentação detalhada passa a existir exclusivamente em `docs/`, enquanto a raiz mantém somente `README.md`.
