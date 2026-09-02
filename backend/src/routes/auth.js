@@ -4,11 +4,9 @@ import jwt from 'jsonwebtoken';
 import { query } from '../database.js';
 import { env } from '../config/env.js';
 import { autenticar, superAdmin } from '../middleware/auth.js';
-import { ensureSuperAdmin } from '../services/bootstrap-admin.js';
+import { syncSuperAdminFromEnv } from '../services/bootstrap-admin.js';
 
 const router = express.Router();
-const JWT_EXPIRES = '24h';
-
 router.post('/login', async (req, res, next) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
@@ -18,7 +16,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ erro: 'Email e senha são obrigatórios.' });
     }
 
-    await ensureSuperAdmin(email);
+    await syncSuperAdminFromEnv();
 
     const result = await query(
       `SELECT id, nome, email, senha, role
@@ -36,7 +34,7 @@ router.post('/login', async (req, res, next) => {
     const token = jwt.sign(
       { id: admin.id, email: admin.email, role: admin.role, nome: admin.nome },
       env.jwtSecret,
-      { expiresIn: JWT_EXPIRES }
+      { expiresIn: env.jwtExpiresIn }
     );
 
     return res.json({
@@ -64,16 +62,18 @@ router.post('/criar-admin', autenticar, superAdmin, async (req, res, next) => {
       return res.status(400).json({ erro: 'Nome, email e senha são obrigatórios.' });
     }
 
-    if (senha.length < 8) {
-      return res.status(400).json({ erro: 'A senha deve ter no mínimo 8 caracteres.' });
+    if (senha.length < env.adminMinPasswordLength) {
+      return res.status(400).json({
+        erro: `A senha deve ter no mínimo ${env.adminMinPasswordLength} caracteres.`
+      });
     }
 
-    const senhaHash = bcrypt.hashSync(senha, 12);
+    const senhaHash = bcrypt.hashSync(senha, env.bcryptCost);
 
     try {
       const result = await query(
-        `INSERT INTO admins (nome, email, senha, role)
-         VALUES ($1, $2, $3, 'super_admin')
+        `INSERT INTO admins (nome, email, senha, role, managed_by_env)
+         VALUES ($1, $2, $3, 'super_admin', FALSE)
          RETURNING id, nome, email, role`,
         [nome, email, senhaHash]
       );

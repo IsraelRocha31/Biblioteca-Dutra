@@ -6,6 +6,7 @@ import BookModal from './BookModal';
 import BookDetails from './BookDetails';
 import LoginModal from './LoginModal';
 import ConfirmModal from './ConfirmModal';
+import { appConfig } from '../config/env';
 
 interface Props {
   admin: Admin | null;
@@ -40,7 +41,7 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
   useEffect(() => { carregarLivros(); }, [carregarLivros]);
 
   useEffect(() => {
-    const timer = setTimeout(() => { carregarLivros(busca); }, 300);
+    const timer = setTimeout(() => { carregarLivros(busca); }, appConfig.searchDebounceMs);
     return () => clearTimeout(timer);
   }, [busca, carregarLivros]);
 
@@ -88,8 +89,8 @@ export default function Dashboard({ admin, onLogin, onLogout }: Props) {
         <div className="topo-esq">
           <span className="logo-mini" aria-hidden="true" />
           <div>
-            <h2>Biblioteca</h2>
-            <small>EE Alfredo Dutra</small>
+            <h2>{appConfig.name}</h2>
+            <small>{appConfig.schoolName}</small>
           </div>
         </div>
         <div className="topo-dir">

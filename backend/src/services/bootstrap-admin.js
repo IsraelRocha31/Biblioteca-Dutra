@@ -2,30 +2,81 @@ import bcrypt from 'bcryptjs';
 import { env } from '../config/env.js';
 import { query } from '../database.js';
 
-export async function ensureSuperAdmin(candidateEmail = env.superAdminEmail) {
-  const email = env.superAdminEmail.trim().toLowerCase();
-  if (String(candidateEmail || '').trim().toLowerCase() !== email) return false;
-  if (!env.superAdminPassword || env.superAdminPassword.length < 8) return false;
+function getConfiguredAdmin() {
+  if (env.superAdminPassword.length < env.adminMinPasswordLength) {
+    throw new Error(
+      `SUPER_ADMIN_PASSWORD deve ter no mínimo ${env.adminMinPasswordLength} caracteres.`
+    );
+  }
 
-  const existing = await query(
-    'SELECT id FROM admins WHERE lower(email) = $1 LIMIT 1',
-    [email]
+  return {
+    nome: env.superAdminName,
+    email: env.superAdminEmail,
+    senha: env.superAdminPassword
+  };
+}
+
+function passwordHashFor(currentHash, plainPassword) {
+  if (currentHash && bcrypt.compareSync(plainPassword, currentHash)) return currentHash;
+  return bcrypt.hashSync(plainPassword, env.bcryptCost);
+}
+
+export async function syncSuperAdminFromEnv() {
+  const configured = getConfiguredAdmin();
+  const managed = await query(
+    `SELECT id, senha
+     FROM admins
+     WHERE managed_by_env = TRUE
+     LIMIT 1`
   );
 
-  if (existing.rowCount) return false;
-
-  const passwordHash = await bcrypt.hash(env.superAdminPassword, 12);
-
-  try {
+  if (managed.rowCount) {
+    const current = managed.rows[0];
+    const senhaHash = passwordHashFor(current.senha, configured.senha);
     const result = await query(
-      `INSERT INTO admins (nome, email, senha, role)
-       VALUES ($1, $2, $3, 'super_admin')
-       RETURNING id`,
-      ['Super Administrador', email, passwordHash]
+      `UPDATE admins
+       SET nome = $1,
+           email = $2,
+           senha = $3,
+           role = 'super_admin'
+       WHERE id = $4
+       RETURNING id, nome, email, role`,
+      [configured.nome, configured.email, senhaHash, current.id]
     );
-    return result.rowCount === 1;
-  } catch (error) {
-    if (error?.code === '23505') return false;
-    throw error;
+    return { status: 'updated', admin: result.rows[0] };
   }
+
+  const sameEmail = await query(
+    `SELECT id, senha
+     FROM admins
+     WHERE lower(email) = $1
+     LIMIT 1`,
+    [configured.email]
+  );
+
+  if (sameEmail.rowCount) {
+    const current = sameEmail.rows[0];
+    const senhaHash = passwordHashFor(current.senha, configured.senha);
+    const result = await query(
+      `UPDATE admins
+       SET nome = $1,
+           senha = $2,
+           role = 'super_admin',
+           managed_by_env = TRUE
+       WHERE id = $3
+       RETURNING id, nome, email, role`,
+      [configured.nome, senhaHash, current.id]
+    );
+    return { status: 'adopted', admin: result.rows[0] };
+  }
+
+  const senhaHash = bcrypt.hashSync(configured.senha, env.bcryptCost);
+  const result = await query(
+    `INSERT INTO admins (nome, email, senha, role, managed_by_env)
+     VALUES ($1, $2, $3, 'super_admin', TRUE)
+     RETURNING id, nome, email, role`,
+    [configured.nome, configured.email, senhaHash]
+  );
+
+  return { status: 'created', admin: result.rows[0] };
 }

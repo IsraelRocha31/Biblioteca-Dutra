@@ -1,17 +1,18 @@
 import type { LoginResponse, ListaLivrosResponse, LivroResponse, Admin } from './types';
+import { appConfig } from './config/env';
 
-const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API = appConfig.apiBasePath;
 
 function getToken(): string | null {
-  return localStorage.getItem('token');
+  return localStorage.getItem(appConfig.authTokenStorageKey);
 }
 
 export function setToken(token: string) {
-  localStorage.setItem('token', token);
+  localStorage.setItem(appConfig.authTokenStorageKey, token);
 }
 
 export function clearToken() {
-  localStorage.removeItem('token');
+  localStorage.removeItem(appConfig.authTokenStorageKey);
 }
 
 export function isLoggedIn(): boolean {
@@ -53,41 +54,42 @@ async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
 }
 
 export async function login(email: string, senha: string): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>('/api/auth/login', {
+  return apiFetch<LoginResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, senha })
   });
 }
 
 export async function getPerfil(): Promise<{ admin: Admin }> {
-  return apiFetch<{ admin: Admin }>('/api/auth/perfil');
+  return apiFetch<{ admin: Admin }>('/auth/perfil');
 }
 
 export async function getLivros(busca?: string): Promise<ListaLivrosResponse> {
-  const params = busca ? `?busca=${encodeURIComponent(busca)}` : '';
-  return apiFetch<ListaLivrosResponse>(`/api/livros${params}`);
+  const params = new URLSearchParams({ limit: String(appConfig.booksDefaultPageSize) });
+  if (busca) params.set('busca', busca);
+  return apiFetch<ListaLivrosResponse>(`/livros?${params.toString()}`);
 }
 
 export async function getLivro(id: number): Promise<LivroResponse> {
-  return apiFetch<LivroResponse>(`/api/livros/${id}`);
+  return apiFetch<LivroResponse>(`/livros/${id}`);
 }
 
 export async function criarLivro(formData: FormData): Promise<LivroResponse> {
-  return apiFetch<LivroResponse>('/api/livros', {
+  return apiFetch<LivroResponse>('/livros', {
     method: 'POST',
     body: formData
   });
 }
 
 export async function atualizarLivro(id: number, formData: FormData): Promise<LivroResponse> {
-  return apiFetch<LivroResponse>(`/api/livros/${id}`, {
+  return apiFetch<LivroResponse>(`/livros/${id}`, {
     method: 'PUT',
     body: formData
   });
 }
 
 export async function deletarLivro(id: number): Promise<{ mensagem: string }> {
-  return apiFetch<{ mensagem: string }>(`/api/livros/${id}`, {
+  return apiFetch<{ mensagem: string }>(`/livros/${id}`, {
     method: 'DELETE'
   });
 }

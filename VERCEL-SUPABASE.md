@@ -1,119 +1,77 @@
 # Arquitetura GitHub + Vercel + Supabase
 
-## Responsabilidades
-
 ```text
 GitHub repository
 ├── frontend/ ───────────────┐
 ├── backend/                 ├──> Vercel
 ├── api/ ────────────────────┘
+├── .env ───────────────────────> contrato versionado
 └── supabase/ ──────────────────> Supabase PostgreSQL
 ```
 
+## Responsabilidades
+
 ### Vercel
 
-A Vercel executa **todo o servidor da aplicação**:
+Executa todo o servidor da aplicação:
 
 - frontend React/Vite;
 - backend Node/Express;
 - autenticação JWT;
-- upload de capas;
 - endpoints REST;
+- upload/entrega de capas;
 - acesso ao PostgreSQL.
 
 ### Supabase
 
-O projeto usa Supabase **somente como banco PostgreSQL**.
+É usado somente como PostgreSQL e para aplicar migrations versionadas em `supabase/migrations/`.
 
-Não são usados pela aplicação:
+Não são usados Supabase Auth, Storage, Edge Functions ou acesso direto do navegador à Data API.
 
-- Supabase Auth;
-- Supabase Storage;
-- Supabase Edge Functions;
-- acesso direto do frontend à Data API.
+## `.env` como contrato
 
-A pasta `supabase/` existe para versionar o schema e as migrations do PostgreSQL.
+O `.env` da raiz é commitado e contém as 12 chaves esperadas pela integração, porém vazias no Git. A Vercel fornece os valores reais no ambiente do build/runtime.
 
-## GitHub Integration do Supabase
+O `dotenv` não sobrescreve variáveis já existentes da plataforma, portanto `process.env.POSTGRES_URL` fornecido pela Vercel continua sendo o valor utilizado.
 
-A pasta está em:
+Não existe `.env.local`, `.env.example` ou `.env` por subprojeto. O único arquivo de ambiente é `/.env`.
 
-```text
-./supabase/
-```
+## Administrador sincronizado
 
-Portanto:
+Configuração versionada:
 
 ```text
-Working directory: .
-Production branch: main
-```
-
-Com Deploy to production habilitado, migrations novas em `supabase/migrations/` são aplicadas automaticamente.
-
-## Comunicação em produção
-
-```text
-Browser
-   |
-   v
-Vercel frontend
-   |
-   | /api/*
-   v
-Vercel backend (Express)
-   |
-   | POSTGRES_URL
-   v
-Supabase PostgreSQL
-```
-
-Não existe comunicação Browser -> Supabase.
-
-## Variáveis sincronizadas pela integração
-
-```text
-POSTGRES_URL
-POSTGRES_PRISMA_URL
-POSTGRES_URL_NON_POOLING
-POSTGRES_USER
-POSTGRES_HOST
-POSTGRES_PASSWORD
-POSTGRES_DATABASE
-SUPABASE_PUBLISHABLE_KEY
-SUPABASE_SECRET_KEY
-SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-NEXT_PUBLIC_SUPABASE_URL
-```
-
-O código atual usa `POSTGRES_URL` para a conexão em runtime. As demais variáveis podem continuar sendo sincronizadas pela integração, mas nenhuma chave Supabase é enviada ao bundle do frontend.
-
-Além delas, configure na Vercel:
-
-```text
-JWT_SECRET
+SUPER_ADMIN_NAME
 SUPER_ADMIN_EMAIL
 SUPER_ADMIN_PASSWORD
 ```
 
-## Capas
+Nesta versão de testes, `SUPER_ADMIN_PASSWORD=admin123` fica versionado. Para trocar a senha, edite essa variável e faça commit/push. O backend converte a senha em bcrypt antes de armazená-la no PostgreSQL.
 
-Como Supabase Storage não faz parte da arquitetura, as capas são armazenadas diretamente na tabela `livros`:
+Depois do commit/push, o backend sincroniza o registro `managed_by_env = TRUE` no PostgreSQL. A alteração do e-mail também move a mesma conta gerenciada, em vez de criar contas duplicadas.
 
-```text
-foto_capa       BYTEA
-foto_capa_mime  TEXT
-```
+A Vercel executa `admin:sync` durante o build. Se o Supabase ainda estiver aplicando a migration inicial, o build não quebra por ausência da coluna/tabela: a sincronização é repetida no primeiro login.
 
-A API não inclui os bytes nas listagens. Ela retorna uma URL própria da Vercel:
+## Comunicação
 
 ```text
-/api/livros/:id/capa?v=<versao>
+Browser
+  -> Vercel frontend
+  -> /api/*
+  -> Vercel backend
+  -> POSTGRES_URL
+  -> Supabase PostgreSQL
 ```
 
-A rota consulta os bytes no PostgreSQL e responde com o MIME correto.
+## GitHub Integration do Supabase
 
-## Segurança do Data API
+A pasta é `./supabase/`, portanto o Working directory é `.` e a branch de produção é `main`.
 
-As tabelas permanecem com RLS habilitado e sem policies públicas. Assim, chaves anon/authenticated do Supabase não têm um caminho autorizado pela aplicação para ler essas tabelas. O backend conecta diretamente ao PostgreSQL usando a credencial de servidor.
+
+## Contrato central de ambiente
+
+Todo runtime da aplicação lê configuração a partir do único `/.env` da raiz. A Vercel pode sobrescrever esses valores com Environment Variables do projeto; isso é usado principalmente pelas 12 variáveis sincronizadas pela integração com Supabase.
+
+O backend acessa ambiente somente por `backend/src/config/env.js`. O frontend acessa ambiente somente por `frontend/src/config/env.ts`; o Vite usa `envDir` apontando para a raiz e limita os prefixos expostos ao navegador.
+
+Use `npm run env:check` antes do commit para verificar se o contrato continua centralizado. O diretório `supabase/migrations/` permanece independente do `.env`, pois a integração GitHub do próprio Supabase é responsável por aplicar o schema.

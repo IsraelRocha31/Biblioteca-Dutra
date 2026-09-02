@@ -1,11 +1,11 @@
 import express from 'express';
 import multer from 'multer';
 import { query } from '../database.js';
+import { env } from '../config/env.js';
 import { autenticar, superAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
-const MAX_COVER_SIZE = 4 * 1024 * 1024;
-const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const allowedMimeTypes = new Set(env.bookCoverAllowedMimeTypes);
 const BOOK_FIELDS = `
   id, isbn, nome, descricao, autor, criado_em, atualizado_em,
   (foto_capa IS NOT NULL) AS tem_capa
@@ -13,18 +13,20 @@ const BOOK_FIELDS = `
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_COVER_SIZE },
+  limits: { fileSize: env.bookCoverMaxSizeBytes },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_MIME_TYPES.has(file.mimetype)) return cb(null, true);
-    return cb(new Error('Apenas imagens JPG, PNG ou WebP são aceitas.'));
+    if (allowedMimeTypes.has(file.mimetype)) return cb(null, true);
+    return cb(new Error(`Apenas imagens ${env.bookCoverAllowedMimeTypes.join(', ')} são aceitas.`));
   }
 });
 
 function parsePagination(page, limit) {
   const parsedPage = Number.parseInt(String(page || '1'), 10);
-  const parsedLimit = Number.parseInt(String(limit || '20'), 10);
+  const parsedLimit = Number.parseInt(String(limit || env.booksDefaultPageSize), 10);
   const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const safeLimit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : 20;
+  const safeLimit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(parsedLimit, 1), env.booksMaxPageSize)
+    : env.booksDefaultPageSize;
   return { page: safePage, limit: safeLimit, offset: (safePage - 1) * safeLimit };
 }
 
@@ -36,7 +38,9 @@ function parseBookId(value) {
 function serializeBook(book) {
   const id = Number(book.id);
   const version = new Date(book.atualizado_em).getTime();
-  const fotoCapa = book.tem_capa ? `/api/livros/${id}/capa?v=${version}` : null;
+  const fotoCapa = book.tem_capa
+    ? `${env.appApiBasePath}/livros/${id}/capa?v=${version}`
+    : null;
   const { tem_capa: _temCapa, ...data } = book;
   return { ...data, id, foto_capa: fotoCapa };
 }
@@ -124,7 +128,7 @@ router.get('/:id/capa', async (req, res, next) => {
 
     res.set('Content-Type', livro.foto_capa_mime || 'application/octet-stream');
     res.set('Content-Length', String(livro.foto_capa.length));
-    res.set('Cache-Control', 'public, max-age=86400, immutable');
+    res.set('Cache-Control', env.bookCoverCacheControl);
     return res.send(livro.foto_capa);
   } catch (error) {
     return next(error);

@@ -1,14 +1,9 @@
 import { pool } from './database.js';
-import { env } from './config/env.js';
-import { ensureSuperAdmin } from './services/bootstrap-admin.js';
+import { syncSuperAdminFromEnv } from './services/bootstrap-admin.js';
 
 async function main() {
-  if (!env.superAdminPassword || env.superAdminPassword.length < 8) {
-    throw new Error('Defina SUPER_ADMIN_PASSWORD com pelo menos 8 caracteres.');
-  }
-
-  const created = await ensureSuperAdmin();
-  console.log(created ? 'Super administrador criado.' : 'Super administrador já existe.');
+  const result = await syncSuperAdminFromEnv();
+  console.log(`Sincronização do administrador: ${result.status}.`);
 }
 
 main()

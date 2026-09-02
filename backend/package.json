@@ -8,8 +8,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "check": "node --check src/app.js && node --check src/server.js && node --check src/database.js && node --check src/routes/auth.js && node --check src/routes/books.js && node --check src/services/bootstrap-admin.js",
-    "admin:bootstrap": "node src/seed.js"
+    "check": "node --check src/app.js && node --check src/server.js && node --check src/database.js && node --check src/routes/auth.js && node --check src/routes/books.js && node --check src/services/bootstrap-admin.js && node --check src/scripts/sync-admin.js",
+    "admin:bootstrap": "node src/seed.js",
+    "admin:sync": "node src/scripts/sync-admin.js"
   },
   "dependencies": {
     "@vercel/functions": "^3.9.5",

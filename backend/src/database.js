@@ -6,9 +6,9 @@ const { Pool } = pg;
 
 export const pool = new Pool({
   connectionString: env.postgresUrl,
-  max: 1,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 10_000,
+  max: env.dbPoolMax,
+  idleTimeoutMillis: env.dbIdleTimeoutMs,
+  connectionTimeoutMillis: env.dbConnectionTimeoutMs,
   allowExitOnIdle: true
 });
 

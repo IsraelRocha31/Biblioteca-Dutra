@@ -3,12 +3,14 @@ frontend/node_modules/
 frontend/dist/
 backend/node_modules/
 
-# Environment/secrets
-.env
-.env.local
-.env.*.local
+# O único arquivo de ambiente do projeto é /.env e ele é versionado.
+# Evita arquivos de ambiente duplicados em subpastas.
 backend/.env
+backend/.env.local
 frontend/.env
+frontend/.env.local
+api/.env
+api/.env.local
 
 # Vercel local state
 .vercel/

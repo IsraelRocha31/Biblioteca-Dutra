@@ -1,5 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import type { Livro } from '../types';
+import { appConfig } from '../config/env';
 
 interface Props {
   aberto: boolean;
@@ -38,8 +39,8 @@ export default function BookModal({ aberto, livro, onFechar, onSalvar }: Props) 
   const handleFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 4 * 1024 * 1024) {
-        setErro('A imagem deve ter no máximo 4MB.');
+      if (file.size > appConfig.coverMaxSizeBytes) {
+        setErro(`A imagem deve ter no máximo ${appConfig.coverMaxSizeMb}MB.`);
         e.target.value = '';
         return;
       }
@@ -101,8 +102,8 @@ export default function BookModal({ aberto, livro, onFechar, onSalvar }: Props) 
           </div>
           <div className="campo">
             <label>Foto da Capa</label>
-            <input type="file" onChange={handleFoto} accept="image/jpeg,image/png,image/webp" />
-            <small>JPG, PNG ou WebP. Máx 4MB.</small>
+            <input type="file" onChange={handleFoto} accept={appConfig.coverAllowedMimeTypes.join(',')} />
+            <small>{appConfig.coverFormatsLabel}. Máx {appConfig.coverMaxSizeMb}MB.</small>
             {preview && <img src={preview} alt="Preview" className="preview-img" />}
           </div>
           {erro && <p className="erro" role="alert">{erro}</p>}

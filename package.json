@@ -10,8 +10,8 @@
   "scripts": {
     "dev": "concurrently -n FRONTEND,BACKEND -c auto \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\"",
     "build": "npm run build --workspace frontend",
-    "vercel-build": "npm run build --workspace frontend",
-    "check": "npm run check --workspace backend && npm run build --workspace frontend",
+    "vercel-build": "npm run env:check && npm run admin:sync --workspace backend && npm run build --workspace frontend",
+    "check": "npm run env:check && npm run check --workspace backend && npm run build --workspace frontend",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
@@ -19,7 +19,9 @@
     "db:reset": "supabase db reset",
     "db:lint": "supabase db lint --local",
     "db:diff": "supabase db diff",
-    "admin:bootstrap": "npm run admin:bootstrap --workspace backend"
+    "admin:bootstrap": "npm run admin:bootstrap --workspace backend",
+    "admin:sync": "npm run admin:sync --workspace backend",
+    "env:check": "node scripts/check-env-contract.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

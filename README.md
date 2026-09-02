@@ -1,40 +1,53 @@
 # Biblioteca Dutra
 
-Sistema de biblioteca escolar com um único repositório GitHub conectado à **Vercel** e ao **Supabase**.
+Sistema de biblioteca escolar em um único repositório GitHub conectado à **Vercel** e ao **Supabase**.
 
-A separação é intencional e simples:
+- **Vercel:** frontend React/Vite + todo o backend Node/Express.
+- **Supabase:** somente PostgreSQL e migrations.
+- **GitHub:** fonte de verdade do código, do contrato `.env` e do schema do banco.
 
-- **Vercel:** executa todo o sistema web: frontend React e backend Node/Express.
-- **Supabase:** fornece somente o banco PostgreSQL e recebe as migrations versionadas.
-- **GitHub:** é a fonte de verdade compartilhada pelos dois serviços.
+## `.env` como fonte única de configuração
 
-## Estrutura definitiva
+O arquivo `/.env` da raiz é o **único arquivo de ambiente do repositório** e o contrato central de runtime. `frontend/`, `backend/`, `api/` e os comandos do projeto não possuem `.env` próprio.
+
+- `backend/src/config/env.js` é o único loader de ambiente do backend.
+- `frontend/src/config/env.ts` é o único loader usado pelos componentes React.
+- `frontend/vite.config.ts` carrega o `.env` da raiz com `envDir`, inclusive no workspace `frontend/`.
+- Variáveis secretas do servidor não são expostas ao bundle. O frontend recebe somente os prefixos seguros configurados no Vite.
+- `supabase/migrations/` é a exceção: o schema é aplicado pela integração GitHub do Supabase e não depende do `.env` para saber qual projeto receberá a migration.
+- CSS continua sendo a fonte de verdade visual e não é transformado em configuração de ambiente.
+
+A checagem `npm run env:check` valida o contrato e acusa acessos a `process.env`/`import.meta.env` fora dos módulos centrais.
+
+As principais categorias no `.env` são: integração Vercel/Supabase, identidade da aplicação, autenticação, desenvolvimento local, HTTP, pool PostgreSQL, paginação e upload de capas.
+
+
+## Estrutura
 
 ```text
 Biblioteca-Dutra/
 ├── frontend/                 # React + TypeScript + Vite -> Vercel
 ├── backend/                  # Node + Express -> Vercel
-├── api/                      # adaptador da Vercel para o backend
-├── supabase/                 # SOMENTE PostgreSQL/migrations -> Supabase
+├── api/                      # entrada da Vercel para o backend
+├── supabase/                 # somente PostgreSQL/migrations -> Supabase
 │   ├── config.toml
 │   ├── migrations/
 │   ├── seed.sql
 │   └── README.md
+├── .env                      # ÚNICO arquivo de configuração do projeto
 ├── package.json
 ├── vercel.json
-├── .env.example
 └── .gitignore
 ```
 
-`frontend/`, `backend/` e `supabase/` são pastas irmãs na raiz do repositório.
+`frontend/`, `backend/` e `supabase/` são pastas irmãs na raiz.
 
 ## Fluxo
 
 ```text
                          GitHub
                         /      \
-                       /        \
-                      v          v
+                       v        v
                   Vercel       Supabase
                  /      \          |
           frontend     backend   PostgreSQL
@@ -43,36 +56,13 @@ Biblioteca-Dutra/
                            POSTGRES_URL
 ```
 
-O navegador nunca acessa o Supabase diretamente. Toda operação passa pelo backend hospedado na Vercel.
+O navegador nunca acessa o Supabase diretamente.
 
-## Supabase conectado ao GitHub
+## `.env` versionado
 
-Como a pasta `supabase/` está na raiz, a integração Supabase + GitHub deve usar:
+O arquivo `.env` da raiz **faz parte do Git** e é o contrato central de configuração.
 
-```text
-Working directory: .
-```
-
-Com **Deploy to production** habilitado, novas migrations em `supabase/migrations/` são aplicadas automaticamente quando chegam à branch de produção.
-
-Neste projeto não há Edge Functions nem buckets de Storage declarados no Supabase.
-
-## Banco e capas dos livros
-
-O Supabase é usado somente como PostgreSQL.
-
-As capas também são persistidas no banco:
-
-- conteúdo da imagem: `BYTEA`;
-- MIME type: `foto_capa_mime`;
-- limite da aplicação: 4 MiB;
-- rota pública de leitura: `GET /api/livros/:id/capa`.
-
-Isso evita filesystem persistente na Vercel e evita usar Supabase Storage.
-
-## Integração Vercel + Supabase
-
-A integração nativa pode sincronizar estas variáveis para a Vercel:
+Ele contém as 12 chaves da integração Vercel/Supabase:
 
 ```text
 POSTGRES_URL
@@ -89,45 +79,73 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 NEXT_PUBLIC_SUPABASE_URL
 ```
 
-O backend atual precisa do banco através de:
+No Git essas 12 chaves ficam sem valores. Os valores reais são injetados pela integração da Vercel e têm prioridade sobre o arquivo carregado pelo `dotenv`.
+
+Isso é importante porque `POSTGRES_URL`, `POSTGRES_PASSWORD` e `SUPABASE_SECRET_KEY`, quando preenchidos, são credenciais reais e não devem ser commitados.
+
+Não existe `.env.local`, `.env.example` nem `.env` dentro de subpastas: **somente `/.env` é aceito**.
+
+## Administrador controlado pelo Git
+
+O `.env` também define a conta administrativa gerenciada pelo projeto:
 
 ```text
-POSTGRES_URL
-```
-
-As chaves `SUPABASE_*` e `NEXT_PUBLIC_SUPABASE_*` podem existir por causa da integração, mas **não são usadas pelo código da aplicação**.
-
-Variáveis próprias da aplicação:
-
-```text
-JWT_SECRET=<chave longa e aleatória>
+SUPER_ADMIN_NAME=Super Administrador
 SUPER_ADMIN_EMAIL=admin@alfredodutra.edu.br
-SUPER_ADMIN_PASSWORD=<senha forte com pelo menos 8 caracteres>
+SUPER_ADMIN_PASSWORD=admin123
 ```
 
-O primeiro superadministrador pode ser criado automaticamente na primeira tentativa de login com `SUPER_ADMIN_EMAIL`, desde que `SUPER_ADMIN_PASSWORD` esteja configurada.
+Nesta versão de testes, a senha fica explícita no `.env` como `admin123`. O backend nunca grava esse texto puro no PostgreSQL: antes de persistir, gera um hash bcrypt.
+
+Para trocar a credencial de teste, edite `SUPER_ADMIN_PASSWORD` no `.env` e depois:
+
+```bash
+git add .env
+git commit -m "chore: atualizar administrador"
+git push
+```
+
+No deploy, o backend sincroniza essa configuração com a tabela `admins`. Se o administrador gerenciado pelo `.env` não existir, ele é criado. Se nome, e-mail ou senha forem alterados, o registro é atualizado.
+
+A sincronização também roda antes do login, então um primeiro deploy em que a migration ainda esteja terminando se recupera automaticamente no primeiro acesso.
+
+## JWT
+
+Nesta versão de testes, `JWT_SECRET` também possui um valor de teste versionado para o projeto funcionar imediatamente. Em produção, sobrescreva-o por uma Environment Variable segura da Vercel.
+
+## Supabase conectado ao GitHub
+
+Como `supabase/` está na raiz:
+
+```text
+Working directory: .
+```
+
+Com **Deploy to production** habilitado, novas migrations em `supabase/migrations/` são aplicadas à branch de produção.
+
+O projeto não usa Supabase Auth, Storage ou Edge Functions.
+
+## Banco e capas
+
+As capas são persistidas no próprio PostgreSQL:
+
+- `foto_capa BYTEA`;
+- `foto_capa_mime TEXT`;
+- limite de 4 MiB;
+- leitura em `GET /api/livros/:id/capa`.
 
 ## Desenvolvimento local
-
-Pré-requisitos:
-
-- Node.js 22+
-- npm
-- Docker, somente se quiser executar um PostgreSQL/Supabase local através da CLI
-
-Instale:
 
 ```bash
 npm install
 ```
 
-Para usar o banco remoto, copie `backend/.env.example` para `backend/.env` e preencha ao menos:
+Para desenvolvimento local, edite o mesmo `/.env` central. Não existe segundo arquivo de ambiente.
 
-```text
-POSTGRES_URL
-JWT_SECRET
-SUPER_ADMIN_EMAIL
-SUPER_ADMIN_PASSWORD
+Defina o administrador versionado com:
+
+```bash
+edite `SUPER_ADMIN_PASSWORD` no `.env` e faça commit/push
 ```
 
 Depois:
@@ -136,42 +154,29 @@ Depois:
 npm run dev
 ```
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:3000/api`
-- Health: `http://localhost:3000/api/health`
+Frontend: `http://localhost:5173`
+
+Backend: `http://localhost:3000/api`
+
+Health: `http://localhost:3000/api/health`
 
 ## Migrations
-
-Crie uma migration nova:
 
 ```bash
 npm run db:new -- nome_da_mudanca
 ```
 
-Ela ficará em:
-
-```text
-supabase/migrations/<timestamp>_nome_da_mudanca.sql
-```
-
-Não edite migrations que já tenham sido aplicadas em produção.
+Os arquivos ficam em `supabase/migrations/`. Não altere migrations já aplicadas em produção; crie uma nova.
 
 ## Deploy
-
-Depois que Vercel e Supabase estiverem ligados ao mesmo GitHub:
 
 ```text
 git push
    |
-   |-- Vercel   -> build do frontend + servidor/API
+   |-- Vercel   -> backend + frontend
    `-- Supabase -> migrations PostgreSQL
 ```
 
 ## CSS e equipe de design
 
-A regra do projeto continua:
-
-- React/TypeScript: estrutura, comportamento, estado, acessibilidade e API.
-- `frontend/src/styles/`: toda a aparência visual.
-
-Consulte `frontend/DESIGNERS.md`.
+React/TypeScript cuida de estrutura e comportamento. Toda aparência visual fica em `frontend/src/styles/`. Consulte `frontend/DESIGNERS.md`.

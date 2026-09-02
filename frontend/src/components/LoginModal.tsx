@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { login } from '../api';
+import { appConfig } from '../config/env';
 import type { Admin } from '../types';
 
 interface Props {
@@ -48,7 +49,7 @@ export default function LoginModal({ aberto, onLogin, onFechar }: Props) {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="admin@alfredodutra.edu.br"
+              placeholder={appConfig.superAdminEmail}
               required
             />
           </div>

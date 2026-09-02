@@ -131,7 +131,9 @@ PostgreSQL diretamente com a credencial de servidor.
 
 7. VARIÁVEIS DE AMBIENTE
 --------------------------------------------------------------------------------
-A integração Vercel + Supabase fornece:
+O arquivo .env da raiz é versionado e funciona como contrato central.
+
+Ele declara as 12 chaves da integração Vercel + Supabase, sem valores no Git:
 
 POSTGRES_URL
 POSTGRES_PRISMA_URL
@@ -146,29 +148,33 @@ SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 NEXT_PUBLIC_SUPABASE_URL
 
-O runtime atual do backend precisa de POSTGRES_URL.
+Os valores reais podem ser injetados pela Vercel. Não existe .env.local, .env.example
+ou outro arquivo de ambiente: somente /.env é aceito pelo projeto.
 
-As chaves SUPABASE_* e NEXT_PUBLIC_SUPABASE_* podem ser sincronizadas pela
-integração, porém não são usadas pelo código e não são expostas pelo Vite.
+Configuração versionada do administrador:
 
-Variáveis próprias:
-
-JWT_SECRET
+SUPER_ADMIN_NAME
 SUPER_ADMIN_EMAIL
 SUPER_ADMIN_PASSWORD
-CORS_ORIGIN
-PORT
+
+Nesta versão de testes, JWT_SECRET possui um valor versionado para o sistema funcionar
+imediatamente. Em produção, ele deve ser sobrescrito por uma Environment Variable segura da Vercel.
 
 
 8. SUPER ADMINISTRADOR
 --------------------------------------------------------------------------------
-O primeiro superadministrador pode ser criado automaticamente quando há uma
-tentativa de login com SUPER_ADMIN_EMAIL e SUPER_ADMIN_PASSWORD está definida.
-A senha é armazenada com bcrypt.
+Existe no banco uma conta marcada com managed_by_env = TRUE. O backend sincroniza
+essa conta com o .env. Alterar nome, e-mail ou senha e fazer deploy atualiza o
+mesmo registro no PostgreSQL.
 
-Bootstrap manual opcional:
+Nesta versão de testes, SUPER_ADMIN_PASSWORD=admin123 fica no .env. Para trocar,
+edite a variável e faça commit/push.
 
-  npm run admin:bootstrap
+O backend converte `SUPER_ADMIN_PASSWORD` em bcrypt antes de gravar no PostgreSQL.
+
+Sincronização manual opcional:
+
+  npm run admin:sync
 
 
 9. DESENVOLVIMENTO LOCAL
@@ -177,16 +183,8 @@ Instalar:
 
   npm install
 
-Copiar:
-
-  backend/.env.example -> backend/.env
-
-Preencher ao menos:
-
-  POSTGRES_URL
-  JWT_SECRET
-  SUPER_ADMIN_EMAIL
-  SUPER_ADMIN_PASSWORD
+Usar o mesmo /.env central também no desenvolvimento local.
+Não criar arquivos .env dentro de frontend/, backend/, api/ ou supabase/.
 
 Executar:
 
@@ -241,3 +239,12 @@ PUT    /api/livros/:id
 DELETE /api/livros/:id
 
 ================================================================================
+
+
+CONFIGURAÇÃO CENTRAL (.env)
+==========================
+O /.env da raiz é o único arquivo de ambiente e a fonte única de configuração de runtime. O backend usa apenas backend/src/config/env.js e o frontend usa apenas frontend/src/config/env.ts. O Vite carrega o .env da raiz. Portas, CORS, JWT, bcrypt, administrador padrão, identidade da aplicação, paginação, upload, cache e parâmetros do pool PostgreSQL são definidos nesse arquivo.
+
+A exceção é supabase/migrations/: o schema do banco é aplicado pela integração GitHub do Supabase e não precisa ler o .env. CSS também permanece responsável exclusivamente pelo visual.
+
+Execute npm run env:check para verificar o contrato antes de enviar alterações.
