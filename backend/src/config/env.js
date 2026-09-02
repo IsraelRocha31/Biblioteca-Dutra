@@ -19,6 +19,14 @@ function integer(name, { min = 0 } = {}) {
   return value;
 }
 
+
+function boolean(name) {
+  const value = required(name).toLowerCase();
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  throw new Error(`Variável de ambiente inválida: ${name}`);
+}
+
 function csv(name) {
   const values = required(name)
     .split(',')
@@ -52,6 +60,7 @@ export const env = Object.freeze({
   dbPoolMax: integer('DB_POOL_MAX', { min: 1 }),
   dbIdleTimeoutMs: integer('DB_IDLE_TIMEOUT_MS', { min: 1 }),
   dbConnectionTimeoutMs: integer('DB_CONNECTION_TIMEOUT_MS', { min: 1 }),
+  dbSslUseLibpqCompat: boolean('DB_SSL_USE_LIBPQ_COMPAT'),
 
   jwtSecret: required('JWT_SECRET'),
   jwtExpiresIn: required('JWT_EXPIRES_IN'),

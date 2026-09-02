@@ -44,6 +44,7 @@ const REQUIRED_KEYS = [
   'DB_POOL_MAX',
   'DB_IDLE_TIMEOUT_MS',
   'DB_CONNECTION_TIMEOUT_MS',
+  'DB_SSL_USE_LIBPQ_COMPAT',
   'BOOKS_DEFAULT_PAGE_SIZE',
   'BOOKS_MAX_PAGE_SIZE',
   'BOOK_COVER_MAX_SIZE_MB',
@@ -111,7 +112,7 @@ if (!rewriteSources.has(apiBasePath) || !rewriteSources.has(`${apiBasePath}/:pat
 
 const sourceRoots = ['backend/src', 'frontend/src', 'api'];
 const allowedProcessEnv = new Set(['backend/src/config/env.js']);
-const allowedImportMetaEnv = new Set();
+const allowedImportMetaEnv = new Set(['frontend/src/config/env.ts']);
 
 for (const sourceRoot of sourceRoots) {
   for (const file of walk(join(root, sourceRoot))) {

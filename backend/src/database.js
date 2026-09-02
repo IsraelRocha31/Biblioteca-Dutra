@@ -4,8 +4,16 @@ import { env } from './config/env.js';
 
 const { Pool } = pg;
 
+function getConnectionString() {
+  const url = new URL(env.postgresUrl);
+  if (env.dbSslUseLibpqCompat && !url.searchParams.has('uselibpqcompat')) {
+    url.searchParams.set('uselibpqcompat', 'true');
+  }
+  return url.toString();
+}
+
 export const pool = new Pool({
-  connectionString: env.postgresUrl,
+  connectionString: getConnectionString(),
   max: env.dbPoolMax,
   idleTimeoutMillis: env.dbIdleTimeoutMs,
   connectionTimeoutMillis: env.dbConnectionTimeoutMs,
