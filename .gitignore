@@ -3,8 +3,8 @@ frontend/node_modules/
 frontend/dist/
 backend/node_modules/
 
-# O único arquivo de ambiente do projeto é /.env e ele é versionado.
-# Evita arquivos de ambiente duplicados em subpastas.
+# Arquivos de ambiente não devem ser versionados (contêm secrets)
+.env
 backend/.env
 backend/.env.local
 frontend/.env
